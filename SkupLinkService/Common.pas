@@ -6,12 +6,9 @@ const
  // App (name must not collide with Delphi properties — identifiers are case-insensitive)
  STR_APP_NAME    = 'SkupLink';
  STR_APP_VERSION = '1.0';
-
- // Service / HTTP
  HTTP_PORT             = 8847;
  POLL_INTERVAL_SECONDS = 5;
 
- // SNMP
  SNMP_PORT                  = 161;
  SNMP_RECEIVE_TIMEOUT_MS    = 2000;
  STR_SNMP_HOST_DEFAULT      = '192.168.3.126';
@@ -24,14 +21,12 @@ const
  SNMP_WIRE_VERSION_1  = 0;
  SNMP_WIRE_VERSION_2C = 1;
 
- // UDP device discovery (Kortex-compatible)
  UDP_DISCOVER_PORT           = 51847;
  UDP_DISCOVER_QUERY          = 'I';
  UDP_DISCOVER_DURATION_MS    = 3000;
  UDP_DISCOVER_SEND_EVERY_MS  = 500;
  UDP_DISCOVER_BLOCK_I2C_SIZE = 128;
 
- // Config paths
  STR_CONFIG_FILE_NAME  = 'config.json';
  STR_CONFIG_APP_FOLDER = STR_APP_NAME;
  STR_WEB_FOLDER        = 'web';
@@ -41,27 +36,23 @@ const
 {$ELSE}
  STR_CONFIG_LINUX_DIR = '/etc/skuplink';
 {$ENDIF}
- // Auth / UI defaults
  STR_DEFAULT_PASSWORD             = 'admin';
  SHUTDOWN_BATTERY_PERCENT_DEFAULT = 15;
  SHUTDOWN_DELAY_SECONDS_DEFAULT   = 120;
  SHUTDOWN_DELAY_SECONDS_MAX       = 7200;
  AUTH_SESSION_TTL_SECONDS         = 12 * 60 * 60;
- HISTORY_MAX_POINTS               = 720; // ~1 hour at 5s poll
+ HISTORY_MAX_POINTS               = 720;
 
- // Topology JSON values
  STR_TOPOLOGY_UNKNOWN                   = 'unknown';
  STR_TOPOLOGY_SINGLE_PHASE              = 'single_phase';
  STR_TOPOLOGY_THREE_PHASE_IN_OUT        = 'three_phase_in_out';
  STR_TOPOLOGY_THREE_PHASE_IN_SINGLE_OUT = 'three_phase_in_single_out';
 
- // Battery status JSON values
  STR_BATTERY_STATUS_UNKNOWN  = 'unknown';
  STR_BATTERY_STATUS_NORMAL   = 'battery_normal';
  STR_BATTERY_STATUS_LOW      = 'battery_low';
  STR_BATTERY_STATUS_DEPLETED = 'battery_depleted';
 
- // API / auth error messages
  STR_ERR_UNAUTHORIZED               = 'Unauthorized';
  STR_ERR_INVALID_JSON_BODY          = 'Invalid JSON body';
  STR_ERR_BODY_MUST_BE_JSON_OBJECT   = 'Body must be a JSON object';
@@ -82,7 +73,6 @@ const
  STR_ERR_DISCOVER_FAILED            = 'Device discovery failed: %s';
  STR_ERR_INTERNAL                   = 'Internal server error';
 
- // Console / debug messages
  STR_MSG_CONSOLE_MODE             = STR_APP_NAME + ' console mode';
  STR_MSG_VERSION                  = 'Version: %s';
  STR_MSG_CONFIG_FILE_PREFIX       = 'Config file: ';
@@ -95,8 +85,7 @@ const
  STR_SERVICE_DISPLAY_NAME         = STR_APP_NAME + ' UPS SNMP Agent';
  STR_SERVICE_DESCRIPTION          = 'SNMP UPS monitor, HTTP API and web UI for SKUP cards. Shuts down the PC on low battery';
 
- // RFC 1628 UPS-MIB (IETF / NUT ietf)
- // Base: 1.3.6.1.2.1.33.1
+ // RFC 1628 UPS-MIB
  OID_UPS_MIB = '1.3.6.1.2.1.33.1';
 
  // Ident
@@ -127,7 +116,6 @@ const
  OID_upsOutputPowerBase       = OID_UPS_MIB + '.4.4.1.4.';
  OID_upsOutputPercentLoadBase = OID_UPS_MIB + '.4.4.1.5.';
 
- // UPS SNMP card device codes (UDP discover reply DeviceID)
  DEVICE_CODE_SKUP_8        = 74;
  DEVICE_CODE_SKUP_11       = 76;
  DEVICE_CODE_SNC_S2        = 78;

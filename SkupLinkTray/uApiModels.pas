@@ -1,7 +1,6 @@
 unit uApiModels;
 
-// Tray-side API model for /api/tray (REST.Json).
-// Field names are F + snake_case JSON key (Fsnmp_connected → snmp_connected).
+// Tray-side /api/tray model (REST.Json).
 
 interface
 

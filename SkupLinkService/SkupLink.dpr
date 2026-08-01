@@ -9,12 +9,7 @@
 {$APPTYPE CONSOLE}
 {$ENDIF}
 {$ENDIF}
-// SkupLink — UPS SNMPv1 poller + HTTP JSON API.
-// DEBUG   — always console application (any OS)
-// RELEASE — Windows service / Linux daemon (systemd Type=simple)
-// Windows RELEASE:
-// SkupLink.exe /install
-// SkupLink.exe /uninstall
+// SkupLink — DEBUG=console; RELEASE=Windows service / Linux daemon.
 
 uses
  System.SysUtils,
@@ -53,7 +48,6 @@ begin
   Application.CreateForm(TSkupLinkService, SkupLinkService);
   Application.Run;
 {$ELSE}
-  // Linux RELEASE: foreground process for systemd.
   RunConsoleMode;
 {$ENDIF}
 {$ENDIF}

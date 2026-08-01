@@ -54,8 +54,6 @@ type
   constructor Create(pHost: TServiceHost);
  end;
 
- // TPollThread
-
 constructor TPollThread.Create(pHost: TServiceHost);
  begin
   // Assign before inherited Create — Execute may start immediately.
@@ -71,7 +69,6 @@ procedure TPollThread.Execute;
     try
      FHost.FSnmp.PollOnce;
     except
-     // Keep service alive; snmp_connected reflects the failure.
     end;
 
     if Terminated then
@@ -82,8 +79,6 @@ procedure TPollThread.Execute;
    end;
  end;
 
-// TServiceHost
-
 constructor TServiceHost.Create;
  begin
   inherited Create;
@@ -93,7 +88,6 @@ constructor TServiceHost.Create;
   try
    FConfig.Load;
   except
-   // Keep in-memory defaults if config file is missing/unreadable.
   end;
 
   FHistory := THistoryStore.Create;
@@ -181,9 +175,7 @@ procedure TServiceHost.RunUntilStopped;
 
   try
    while FStopEvent.WaitFor(1000) = wrTimeout do
-    begin
-     // Idle until RequestStop / signal.
-    end;
+    ;
   finally
    Stop;
   end;

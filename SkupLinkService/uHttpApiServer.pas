@@ -1,8 +1,6 @@
 ﻿unit uHttpApiServer;
 
 // HTTP API + static web UI (web/).
-// Public:  GET /health, GET /api/tray, POST /api/login, static assets
-// Authed:  UPS / settings / history / password / discover / logout
 
 interface
 
@@ -61,8 +59,6 @@ uses
  IdSocketHandle,
  REST.Json,
  uApiModels;
-
-// THttpApiServer
 
 constructor THttpApiServer.Create(pConfig: TAppConfig; pSnmp: TSnmpUpsClient; pAuth: TAuthService; pHistory: THistoryStore);
  begin
@@ -437,7 +433,6 @@ procedure THttpApiServer.HandleCommandGet(pContext: TIdContext; pRequestInfo: TI
      Exit;
     end;
 
-   // Web UI and static assets (/, /app.css, …)
    if not StartsText('/api/', Path) then
     begin
      if TryServeStatic(Path, pResponseInfo) then

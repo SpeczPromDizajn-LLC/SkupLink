@@ -1,7 +1,6 @@
 ﻿unit uApiModels;
 
-// HTTP API request/response models for REST.Json serialization.
-// Field names are F + snake_case JSON key (Fsnmp_host → snmp_host).
+// HTTP API models for REST.Json serialization.
 
 interface
 
@@ -135,8 +134,6 @@ uses
  REST.Json,
  Common;
 
-// TApiOk
-
 constructor TApiOk.Create(pOk: Boolean);
  begin
   inherited Create;
@@ -156,8 +153,6 @@ class function TApiOk.TrueJson: string;
    Obj.Free;
   end;
  end;
-
-// TApiHealth
 
 constructor TApiHealth.Create;
  begin
@@ -180,8 +175,6 @@ class function TApiHealth.Json: string;
   end;
  end;
 
-// TApiError
-
 constructor TApiError.Create(const pError: string);
  begin
   inherited Create;
@@ -203,16 +196,12 @@ class function TApiError.ToJson(const pError: string): string;
   end;
  end;
 
-// TApiLoginResponse
-
 constructor TApiLoginResponse.Create(const pToken: string);
  begin
   inherited Create;
   Fok := TRUE;
   Ftoken := pToken;
  end;
-
-// TApiTrayStatus
 
 constructor TApiTrayStatus.Create;
  begin
@@ -222,8 +211,6 @@ constructor TApiTrayStatus.Create;
   Fon_battery := FALSE;
   Fcharge_percent := -1;
  end;
-
-// TApiDiscoverResponse
 
 constructor TApiDiscoverResponse.Create;
  begin

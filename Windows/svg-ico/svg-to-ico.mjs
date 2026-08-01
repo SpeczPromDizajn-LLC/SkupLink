@@ -1,14 +1,5 @@
 #!/usr/bin/env node
-/**
- * Universal SVG → ICO converter.
- *
- * Usage:
- *   node svg-to-ico.mjs <input.svg> <output.ico> [--sizes 16,24,32,48,64,128,256]
- *
- * Examples:
- *   node svg-to-ico.mjs ../SkupLinkService/web/favicon.svg SkupLink.ico
- *   npm run svg-to-ico -- logo.svg app.ico --sizes 16,32,48,256
- */
+/** SVG → ICO converter. Usage: node svg-to-ico.mjs <input.svg> <output.ico> [--sizes 16,24,...] — see README. */
 
 import { writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';

@@ -1,7 +1,6 @@
 unit uSnmpOids;
 
-// Helpers for indexed RFC 1628 UPS-MIB OIDs.
-// OID constants live in Common.pas.
+// Helpers for indexed RFC 1628 UPS-MIB OIDs (constants in Common.pas).
 
 interface
 

@@ -50,8 +50,6 @@ uses
  uApiModels,
  uSnmpOids;
 
-// TSnmpUpsClient
-
 constructor TSnmpUpsClient.Create(pConfig: TAppConfig; pHistory: THistoryStore; pShutdown: TShutdownWatch);
  begin
   inherited Create;
@@ -228,7 +226,6 @@ procedure TSnmpUpsClient.PollInternal(const pCfg: TAppConfigData; pDest: TUpsSna
    pDest.battery.status := TUpsSnapshot.BatteryStatusToString(Raw);
    pDest.battery.voltage := ScaleTenths(RequireInteger(SNMP, OID_upsBatteryVoltage));
 
-   // Optional on some SNMP cards.
    if GetInteger(SNMP, OID_upsEstimatedChargeRemaining, Raw) then
     pDest.battery.charge_percent := Raw
    else

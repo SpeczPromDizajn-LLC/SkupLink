@@ -135,7 +135,6 @@ function TAuthService.IsValidToken(const pToken: string): Boolean;
      Exit;
     end;
 
-   // Sliding expiry on activity.
    FSessions.AddOrSetValue(pToken, IncSecond(Now, AUTH_SESSION_TTL_SECONDS));
    Result := TRUE;
   finally

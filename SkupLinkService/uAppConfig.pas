@@ -1,13 +1,6 @@
 ﻿unit uAppConfig;
 
-// Persistent service settings.
-// Storage: JSON file (cross-platform, easy to edit and update via HTTP POST).
-// Default path:
-// Windows DEBUG   — <current dir>\config.json
-// Windows RELEASE — %ProgramData%\SkupLink\config.json
-// Linux           — /etc/skuplink/config.json
-// Fallback        — <exe-dir>\config.json if the preferred path is not writable.
-// JSON keys follow snake_case via field names (Fsnmp_host → snmp_host).
+// Persistent service settings (JSON file; snake_case keys via F-field names).
 
 interface
 
@@ -69,8 +62,6 @@ uses
  uApiModels,
  uPasswordHash;
 
-// TAppConfigData
-
 constructor TAppConfigData.Create;
  begin
   inherited Create;
@@ -120,8 +111,6 @@ procedure TAppConfigData.Normalize;
   if Fpassword_hash = '' then
    Fpassword_hash := HashPassword(STR_DEFAULT_PASSWORD);
  end;
-
-// TAppConfig
 
 constructor TAppConfig.Create;
  begin

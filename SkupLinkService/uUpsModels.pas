@@ -1,7 +1,6 @@
 ﻿unit uUpsModels;
 
-// High-level UPS data model for JSON serialization (REST.Json).
-// Field names are F + snake_case JSON key (Fsnmp_host → snmp_host).
+// UPS data model for REST.Json serialization.
 
 interface
 
@@ -48,7 +47,6 @@ type
  public
   property index:   Integer read Findex write Findex;
   property voltage: Double read Fvoltage write Fvoltage;
-  // Mirrors global upsOutputFrequency.
   property frequency:    Double read Ffrequency write Ffrequency;
   property percent_load: Double read Fpercent_load write Fpercent_load;
   property power_watts:  Double read Fpower_watts write Fpower_watts;
@@ -95,15 +93,9 @@ type
   property status:      string read Fstatus write Fstatus;
   property status_code: Integer read Fstatus_code write Fstatus_code;
   property voltage:     Double read Fvoltage write Fvoltage;
-
-  // upsEstimatedChargeRemaining — battery capacity %; -1 if unavailable.
   property charge_percent: Integer read Fcharge_percent write Fcharge_percent;
-
-  // upsEstimatedMinutesRemaining — remaining runtime on battery.
   property estimated_minutes_remaining: Integer read Festimated_minutes_remaining write Festimated_minutes_remaining;
   property estimated_seconds_remaining: Integer read Festimated_seconds_remaining write Festimated_seconds_remaining;
-
-  // upsSecondsOnBattery — elapsed time already on battery.
   property seconds_on_battery: Integer read Fseconds_on_battery write Fseconds_on_battery;
  end;
 
@@ -130,8 +122,6 @@ type
   property input: TUpsInputInfo read Finput write Finput;
   property output: TUpsOutputInfo read Foutput write Foutput;
   property battery: TUpsBatteryInfo read Fbattery write Fbattery;
-
-  // TRUE only when the last poll read all parameters without errors.
   property snmp_connected: Boolean read Fsnmp_connected write Fsnmp_connected;
  end;
 
@@ -164,8 +154,6 @@ type
 
 implementation
 
-// TUpsInputInfo
-
 destructor TUpsInputInfo.Destroy;
  begin
   FreePhases;
@@ -191,8 +179,6 @@ function TUpsInputInfo.AddPhase: TUpsInputPhase;
   SetLength(Fphases, Length(Fphases) + 1);
   Fphases[High(Fphases)] := Result;
  end;
-
-// TUpsOutputInfo
 
 destructor TUpsOutputInfo.Destroy;
  begin
@@ -222,8 +208,6 @@ function TUpsOutputInfo.AddPhase: TUpsOutputPhase;
   SetLength(Fphases, Length(Fphases) + 1);
   Fphases[High(Fphases)] := Result;
  end;
-
-// TUpsSnapshot
 
 constructor TUpsSnapshot.Create;
  begin
@@ -297,8 +281,6 @@ class function TUpsSnapshot.BatteryStatusToString(pCode: Integer): string;
    Result := STR_BATTERY_STATUS_UNKNOWN;
   end;
  end;
-
-// TUpsHistory
 
 destructor TUpsHistory.Destroy;
  begin

@@ -1,8 +1,5 @@
 ﻿unit uShutdownWatch;
 
-// Schedules OS shutdown when UPS is on battery and charge drops to the configured %.
-// Cancels the pending shutdown when mains power returns.
-
 interface
 
 uses
@@ -151,7 +148,6 @@ procedure TShutdownWatch.Evaluate(pSnap: TUpsSnapshot);
   if not pSnap.snmp_connected then
    Exit;
 
-  // Mains restored — cancel a pending OS shutdown.
   if pSnap.battery.seconds_on_battery <= 0 then
    begin
     FLock.Enter;

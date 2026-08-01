@@ -1,7 +1,6 @@
 unit uNetInterfaces;
 
-// Enumerate IPv4 broadcast addresses for all non-loopback adapters
-// (LAN, Wi-Fi, VPN), same approach as KortexUpdate NetParams.EnumNetInterfaces.
+// Enumerate IPv4 broadcast addresses (multi-NIC / VPN; KortexUpdate-style).
 
 interface
 
@@ -96,7 +95,6 @@ function EnumBroadcastAddresses: TArray<string>;
     end;
 {$ENDIF}
 
-   // Always include limited broadcast as a fallback (and for non-Windows).
    List.Add('255.255.255.255');
 
    SetLength(Result, List.Count);
