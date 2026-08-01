@@ -1,5 +1,9 @@
 # SkupLink — SNMP UPS Monitor
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey.svg)](#)
+[![Delphi](https://img.shields.io/badge/Delphi-11%2F12-red.svg)](#)
+
 **Language:** [English](README.en.md) | [Русский](README.md)
 
 Windows / Linux service that polls UPS SNMP cards using **RFC 1628 (UPS-MIB)**, with an HTTP API and web UI.  
