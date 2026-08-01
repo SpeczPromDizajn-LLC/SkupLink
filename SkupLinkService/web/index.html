@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app.css">
+  <script src="/lang.js"></script>
+  <script>
+    (function ()
+    {
+      var token = localStorage.getItem('skuplink_token');
+      window.__SL_BOOT =
+      { ups: null, settings: null, authFailed: false, live: false };
+
+      function syncGet(url)
+      {
+        var xhr = new XMLHttpRequest();
+
+        xhr.open('GET', url, false);
+        xhr.setRequestHeader('X-Auth-Token', token);
+
+        try
+        {
+          xhr.send(null);
+        }
+        catch (e)
+        {
+          return null;
+        }
+
+        if (xhr.status === 401)
+        {
+          window.__SL_BOOT.authFailed = true;
+
+          return null;
+        }
+
+        if ((xhr.status < 200) || (xhr.status >= 300))
+          return null;
+
+        try
+        {
+          return JSON.parse(xhr.responseText);
+        }
+        catch (e)
+        {
+          return null;
+        }
+      }
+
+      if (!token)
+      {
+        document.documentElement.classList.add('sl-guest');
+        return;
+      }
+
+      document.documentElement.classList.add('sl-session');
+      window.__SL_BOOT.ups = syncGet('/api/ups');
+      window.__SL_BOOT.settings = syncGet('/api/settings');
+
+      if (window.__SL_BOOT.authFailed)
+      {
+        localStorage.removeItem('skuplink_token');
+        document.documentElement.classList.remove('sl-session');
+        document.documentElement.classList.add('sl-guest');
+        return;
+      }
+
+      window.__SL_BOOT.live = !!window.__SL_BOOT.ups;
+
+      if (window.__SL_BOOT.ups)
+      {
+        try
+        {
+          localStorage.setItem('skuplink_ups_cache', JSON.stringify(window.__SL_BOOT.ups));
+        }
+        catch (e)
+        {
+        }
+      }
+      else
+      {
+        try
+        {
+          window.__SL_BOOT.ups = JSON.parse(localStorage.getItem('skuplink_ups_cache') || 'null');
+        }
+        catch (e)
+        {
+          window.__SL_BOOT.ups = null;
+        }
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-orb bg-orb-a" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb-b" aria-hidden="true"></div>
+
+  <section id="view-login" class="login-view">
+    <div class="login-stage">
+      <div class="lang-switch" role="group" data-i18n-aria="lang_aria">
+        <button type="button" class="lang-btn" data-lang="ru" aria-pressed="false">RU</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      
+      <div class="login-brand">
+        <p class="brand-mark" data-i18n="brand"></p>
+        <span class="app-version app-version-top" data-app-version hidden></span>
+      </div>
+      <h1 class="login-title" data-i18n="login_title"></h1>
+      <p class="login-lead" data-i18n="login_lead"></p>
+      
+      <form id="login-form" class="login-form" autocomplete="on">
+        <label class="field">
+          <span data-i18n="login_password"></span>
+          <input id="login-password" type="password" name="password" required autofocus data-i18n-placeholder="login_password_placeholder">
+        </label>
+        
+        <p id="login-error" class="form-error" hidden></p>
+        <button type="submit" class="btn btn-primary" data-i18n="login_submit"></button>
+      </form>
+      
+      <p class="login-hint"><span data-i18n="login_hint_prefix"></span> <code>admin</code></p>
+    </div>
+  </section>
+
+  <section id="view-app" class="app-view">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <span class="brand-mark" data-i18n="brand"></span>
+        <span class="app-version app-version-top" data-app-version hidden></span>
+        <span id="conn-pill" class="pill pill-warn">…</span>
+      </div>
+
+      <nav class="tabs" data-i18n-aria="nav_aria">
+        <button type="button" class="tab is-active" data-tab="overview" data-i18n="tab_overview"></button>
+        <button type="button" class="tab" data-tab="charts" data-i18n="tab_charts"></button>
+        <button type="button" class="tab" data-tab="settings" data-i18n="tab_settings"></button>
+      </nav>
+
+      <button type="button" id="btn-logout" class="btn btn-ghost" data-i18n="logout"></button>
+    </header>
+
+    <main class="main">
+      <div id="panel-overview" class="panel is-active">
+        <header class="panel-head">
+          <h2 data-i18n="overview_title"></h2>
+          <p id="ups-ident" class="panel-sub"></p>
+        </header>
+
+        <div class="metric-row">
+          <article class="metric">
+            <span class="metric-label" data-i18n="metric_input"></span>
+            <strong id="m-vin" class="metric-value">—</strong>
+            <span class="metric-unit" data-i18n="unit_v"></span>
+          </article>
+
+          <article class="metric">
+            <span class="metric-label" data-i18n="metric_output"></span>
+            <strong id="m-vout" class="metric-value">—</strong>
+            <span class="metric-unit" data-i18n="unit_v"></span>
+          </article>
+
+          <article class="metric">
+            <span class="metric-label" data-i18n="metric_load"></span>
+            <strong id="m-load" class="metric-value">—</strong>
+            <span class="metric-unit" data-i18n="unit_percent"></span>
+          </article>
+
+          <article class="metric">
+            <span class="metric-label" data-i18n="metric_battery"></span>
+            <strong id="m-batv" class="metric-value">—</strong>
+            <span class="metric-unit" data-i18n="unit_v"></span>
+          </article>
+        </div>
+
+        <div class="overview-grid">
+          <article id="block-charge" class="block charge-block" hidden>
+            <h3 data-i18n="charge_title"></h3>
+
+            <div class="charge-ring-wrap">
+              <svg class="charge-ring" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+                <circle id="charge-arc" class="ring-value" cx="60" cy="60" r="52"></circle>
+              </svg>
+
+              <div class="charge-center">
+                <strong id="m-charge">—</strong>
+                <span data-i18n="unit_percent"></span>
+              </div>
+            </div>
+
+            <p id="m-bat-status" class="muted"></p>
+          </article>
+
+          <article id="block-info" class="block" hidden>
+            <h3 data-i18n="power_time_title"></h3>
+
+            <dl class="kv">
+              <div><dt data-i18n="label_topology"></dt><dd id="m-topology">—</dd></div>
+              <div><dt data-i18n="label_work_mode"></dt><dd id="m-onbat">—</dd></div>
+              <div><dt data-i18n="label_remain_min"></dt><dd id="m-remain">—</dd></div>
+              <div><dt data-i18n="label_power"></dt><dd id="m-power">—</dd></div>
+              <div><dt data-i18n="label_shutdown_threshold"></dt><dd id="m-threshold">—</dd></div>
+              <div><dt data-i18n="label_shutdown_delay"></dt><dd id="m-delay">—</dd></div>
+            </dl>
+          </article>
+
+          <article id="block-phases" class="block phases-block" hidden>
+            <h3 data-i18n="phases_input"></h3>
+            <div id="phases-in" class="phase-list"></div>
+
+            <h3 class="phase-out-title" data-i18n="phases_output"></h3>
+            <div id="phases-out" class="phase-list"></div>
+          </article>
+        </div>
+      </div>
+
+      <div id="panel-charts" class="panel">
+        <header class="panel-head">
+          <h2 data-i18n="charts_title"></h2>
+          <p class="panel-sub" data-i18n="charts_sub"></p>
+        </header>
+
+        <div class="charts-grid">
+          <article class="block chart-block">
+            <h3 data-i18n="chart_vin"></h3>
+            <canvas id="chart-vin" width="640" height="220"></canvas>
+          </article>
+
+          <article class="block chart-block">
+            <h3 data-i18n="chart_vout"></h3>
+            <canvas id="chart-vout" width="640" height="220"></canvas>
+          </article>
+
+          <article class="block chart-block">
+            <h3 data-i18n="chart_load"></h3>
+            <canvas id="chart-load" width="640" height="220"></canvas>
+          </article>
+
+          <article class="block chart-block">
+            <h3 data-i18n="chart_batv"></h3>
+            <canvas id="chart-batv" width="640" height="220"></canvas>
+          </article>
+        </div>
+      </div>
+
+      <div id="panel-settings" class="panel">
+        <header class="panel-head">
+          <h2 data-i18n="settings_title"></h2>
+          <p class="panel-sub" data-i18n="settings_sub"></p>
+        </header>
+
+        <div class="settings-grid">
+          <form id="settings-form" class="block form-block">
+            <h3 data-i18n="settings_snmp_title"></h3>
+
+            <label class="field">
+              <span data-i18n="settings_host"></span>
+              <div class="host-row">
+                <input id="set-host" type="text" required placeholder="192.168.3.126">
+                <button type="button" id="btn-discover" class="btn btn-ghost" data-i18n="settings_discover"></button>
+              </div>
+            </label>
+
+            <div id="discover-panel" class="discover-panel" hidden>
+              <p id="discover-status" class="discover-status"></p>
+              <div id="discover-list" class="discover-list"></div>
+            </div>
+
+            <label class="field">
+              <span data-i18n="settings_snmp_version"></span>
+              <select id="set-snmp-version">
+                <option value="1">SNMPv1</option>
+                <option value="2c">SNMPv2c</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span data-i18n="settings_community"></span>
+              <input id="set-community" type="text" required placeholder="public">
+            </label>
+
+            <label class="field">
+              <span data-i18n="settings_threshold"></span>
+              <input id="set-threshold" type="number" min="1" max="99" required>
+            </label>
+
+            <label class="field">
+              <span data-i18n="settings_delay"></span>
+              <input id="set-delay" type="number" min="0" max="7200" required>
+            </label>
+
+            <p class="help" data-i18n="settings_help"></p>
+
+            <p id="settings-msg" class="form-msg" hidden></p>
+            <button type="submit" class="btn btn-primary" data-i18n="settings_save"></button>
+          </form>
+
+          <form id="password-form" class="block form-block">
+            <h3 data-i18n="password_title"></h3>
+
+            <label class="field">
+              <span data-i18n="password_old"></span>
+              <input id="pwd-old" type="password" required>
+            </label>
+
+            <label class="field">
+              <span data-i18n="password_new"></span>
+              <input id="pwd-new" type="password" required minlength="4">
+            </label>
+
+            <label class="field">
+              <span data-i18n="password_new2"></span>
+              <input id="pwd-new2" type="password" required minlength="4">
+            </label>
+
+            <p id="password-msg" class="form-msg" hidden></p>
+            <button type="submit" class="btn btn-primary" data-i18n="password_submit"></button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <script>
+    if (window.SLLang) SLLang.apply();
+  </script>
+
+  <script src="/app.js"></script>
+</body>
+</html>

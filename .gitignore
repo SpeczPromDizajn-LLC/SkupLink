@@ -1,0 +1,39 @@
+# Delphi / RAD Studio
+**/__history/
+**/Win32/
+**/Win64/
+**/Linux64/
+*.dcu
+*.exe
+*.dll
+*.o
+*.obj
+*.rsm
+*.map
+*.tds
+*.local
+*.identcache
+*.stat
+*.~*
+
+# Local runtime config (keep *.example.json)
+**/config.json
+SkupLinkService/config.json
+
+# Linux built binary (build from sources)
+Linux/SkupLink
+
+# Logs / temp
+poll.log
+_out.txt
+_err.txt
+*.log
+
+# Node (Windows/svg-to-ico tool)
+**/node_modules/
+
+# OS / IDE
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.skincfg

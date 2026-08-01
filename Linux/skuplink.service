@@ -1,0 +1,17 @@
+[Unit]
+Description=SkupLink UPS SNMP HTTP Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/SkupLink
+Restart=on-failure
+RestartSec=3
+# Optional: ensure config directory exists and is writable
+# Environment=...
+User=root
+WorkingDirectory=/etc/skuplink
+
+[Install]
+WantedBy=multi-user.target

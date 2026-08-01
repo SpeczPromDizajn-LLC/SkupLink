@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+ <defs>
+  <style>
+   .fil0 {fill:#0f766e}
+  </style>
+ </defs>
+ <g transform="translate(-139.95 -57.226)scale(.032)">
+  <circle cx="4991.5" cy="2915.7" r="364.35" class="fil0"/>
+  <circle cx="4991.5" cy="4661.3" r="364.35" class="fil0"/>
+  <circle cx="4991.5" cy="3788.3" r="364.35" class="fil0"/>
+  <circle cx="6114.5" cy="2682.9" r="485.05" class="fil0"/>
+  <circle cx="6114.5" cy="4893.3" r="485.05" class="fil0"/>
+  <circle cx="6114.5" cy="3788.3" r="485.05" class="fil0"/>
+  <circle cx="7496.5" cy="2411.3" r="622.99" class="fil0"/>
+  <circle cx="7496.5" cy="5165.3" r="622.99" class="fil0"/>
+  <circle cx="7496.5" cy="3788.3" r="622.99" class="fil0"/>
+ </g>
+</svg>

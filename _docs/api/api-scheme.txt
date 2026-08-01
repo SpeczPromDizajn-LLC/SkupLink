@@ -1,0 +1,78 @@
+API
+Auth: Bearer / X-Auth-Token (кроме /health, /api/tray, /api/login и статики web/)
+Content-Type: application/json; charset=utf-8
+JSON keys: snake_case
+Default password: admin
+
+/
+├─ GET  /                                         Web UI (web/index.html)
+├─ GET  /*.{css,js,…}                             Статика из каталога web/
+│
+├─ /health
+│  └─ GET  /                                      Liveness (без auth)
+│      response: {"ok":true}
+│
+└─ /api
+   ├─ /tray
+   │  └─ GET  /                                   Статус для tray-иконки (без auth)
+   │      response:
+   │        ok                                    bool
+   │        snmp_connected                        bool
+   │        on_battery                            bool
+   │        charge_percent                        int (-1 если недоступен)
+   │
+   ├─ /login
+   │  └─ POST /                                   Вход
+   │      body: { password }
+   │      response: { ok, token }
+   │
+   ├─ /logout
+   │  └─ POST /                                   Выход (auth)
+   │
+   ├─ /password
+   │  └─ POST /                                   Смена пароля (auth)
+   │      body: { old_password, new_password }
+   │
+   ├─ /ups
+   │  └─ GET  /                                   Снимок SNMP (auth)
+   │      response:
+   │        ident.*                               string
+   │        topology                              string
+   │        input / output / battery…             см. модель
+   │        battery.charge_percent                int (-1 если OID недоступен)
+   │        snmp_connected                        bool
+   │
+   ├─ /history
+   │  └─ GET  /                                   История для графиков (auth)
+   │      response:
+   │        samples[]:
+   │          ts                                  ISO8601
+   │          input_voltages[]                    float (по фазам)
+   │          output_voltages[]                   float (по фазам)
+   │          load_percents[]                     float (по фазам выхода)
+   │          battery_voltage                     float
+   │          charge_percent                      float
+   │
+   ├─ /discover
+   │  ├─ GET  /                                   Поиск устройств UDP broadcast (auth)
+   │  └─ POST /                                   То же (auth)
+   │      response:
+   │        ok                                    bool
+   │        devices[]:
+   │          ip, name, version, rev, mac, uid    string
+   │          device_id                           int
+   │        broadcasts[]                          string (подсети, куда слали 'I')
+   │      note: ~3 с, порт 51847, запрос 'I' на broadcast всех NIC/VPN
+   │
+   └─ /settings
+      ├─ GET  /                                   Настройки без password_hash (auth)
+      │   response:
+      │     snmp_host                             string
+      │     snmp_community                        string
+      │     snmp_version                          string ("1" | "2c")
+      │     shutdown_battery_percent              int (1..99)
+      │     shutdown_delay_seconds                int (0..7200)
+      │
+      └─ POST /                                   Full public settings (auth)
+          body: snmp_host, snmp_community, snmp_version, shutdown_battery_percent, shutdown_delay_seconds
+          errors: 400 / 401 / 404 / 405

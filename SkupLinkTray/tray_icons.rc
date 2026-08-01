@@ -1,0 +1,3 @@
+TRAY_OFFLINE ICON "icons\\tray_offline.ico"
+TRAY_MAINS   ICON "icons\\tray_mains.ico"
+TRAY_BATTERY ICON "icons\\tray_battery.ico"

@@ -1,0 +1,12 @@
+{
+  "name": "skuplink-svg-ico",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "svg-to-ico": "node svg-to-ico.mjs"
+  },
+  "dependencies": {
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.34.2"
+  }
+}

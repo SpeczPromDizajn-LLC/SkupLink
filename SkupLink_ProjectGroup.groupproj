@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{BB6F3CAB-CC16-47D2-879A-CBF3430DDB03}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="SkupLinkService\SkupLink.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="SkupLinkTray\SkupLinkTray.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="SkupLink">
+        <MSBuild Projects="SkupLinkService\SkupLink.dproj"/>
+    </Target>
+    <Target Name="SkupLink:Clean">
+        <MSBuild Projects="SkupLinkService\SkupLink.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SkupLink:Make">
+        <MSBuild Projects="SkupLinkService\SkupLink.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="SkupLinkTray">
+        <MSBuild Projects="SkupLinkTray\SkupLinkTray.dproj"/>
+    </Target>
+    <Target Name="SkupLinkTray:Clean">
+        <MSBuild Projects="SkupLinkTray\SkupLinkTray.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SkupLinkTray:Make">
+        <MSBuild Projects="SkupLinkTray\SkupLinkTray.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="SkupLink;SkupLinkTray"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="SkupLink:Clean;SkupLinkTray:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="SkupLink:Make;SkupLinkTray:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
