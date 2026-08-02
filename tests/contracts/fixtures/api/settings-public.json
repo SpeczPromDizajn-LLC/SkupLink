@@ -1,0 +1,7 @@
+{
+  "snmp_host": "192.168.3.126",
+  "snmp_community": "public",
+  "snmp_version": "1",
+  "shutdown_battery_percent": 15,
+  "shutdown_delay_seconds": 120
+}

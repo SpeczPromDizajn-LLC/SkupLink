@@ -1,0 +1,11 @@
+{
+  "name": "skuplink-contracts-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test \"*.test.js\"",
+    "test:api": "node --test api-field-contracts.test.js",
+    "test:sync": "node --test service-tray-sync.test.js"
+  }
+}

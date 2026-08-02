@@ -9,6 +9,9 @@
         <Projects Include="SkupLinkTray\SkupLinkTray.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="tests\delphi\SkupLinkTests.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -35,14 +38,23 @@
     <Target Name="SkupLinkTray:Make">
         <MSBuild Projects="SkupLinkTray\SkupLinkTray.dproj" Targets="Make"/>
     </Target>
+    <Target Name="SkupLinkTests">
+        <MSBuild Projects="tests\delphi\SkupLinkTests.dproj"/>
+    </Target>
+    <Target Name="SkupLinkTests:Clean">
+        <MSBuild Projects="tests\delphi\SkupLinkTests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SkupLinkTests:Make">
+        <MSBuild Projects="tests\delphi\SkupLinkTests.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="SkupLink;SkupLinkTray"/>
+        <CallTarget Targets="SkupLink;SkupLinkTray;SkupLinkTests"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="SkupLink:Clean;SkupLinkTray:Clean"/>
+        <CallTarget Targets="SkupLink:Clean;SkupLinkTray:Clean;SkupLinkTests:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="SkupLink:Make;SkupLinkTray:Make"/>
+        <CallTarget Targets="SkupLink:Make;SkupLinkTray:Make;SkupLinkTests:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

@@ -6,6 +6,7 @@ const
  // App (name must not collide with Delphi properties — identifiers are case-insensitive)
  STR_APP_NAME    = 'SkupLink';
  STR_APP_VERSION = '1.0';
+ // Держать синхронно / keep in sync: SkupLinkTray/Common.pas HTTP_PORT
  HTTP_PORT             = 8847;
  POLL_INTERVAL_SECONDS = 5;
 
@@ -25,7 +26,6 @@ const
  UDP_DISCOVER_QUERY          = 'I';
  UDP_DISCOVER_DURATION_MS    = 3000;
  UDP_DISCOVER_SEND_EVERY_MS  = 500;
- UDP_DISCOVER_BLOCK_I2C_SIZE = 128;
 
  STR_CONFIG_FILE_NAME  = 'config.json';
  STR_CONFIG_APP_FOLDER = STR_APP_NAME;
@@ -55,7 +55,6 @@ const
 
  STR_ERR_UNAUTHORIZED               = 'Unauthorized';
  STR_ERR_INVALID_JSON_BODY          = 'Invalid JSON body';
- STR_ERR_BODY_MUST_BE_JSON_OBJECT   = 'Body must be a JSON object';
  STR_ERR_EMPTY_JSON_BODY            = 'Empty JSON body';
  STR_ERR_PASSWORD_REQUIRED          = 'Password is required';
  STR_ERR_INVALID_PASSWORD           = 'Invalid password';
@@ -82,6 +81,14 @@ const
  STR_MSG_SHUTDOWN_WARNING_RU      = STR_APP_NAME + ': низкий заряд ИБП. Компьютер будет выключен';
  STR_MSG_SHUTDOWN_SCHEDULED_DEBUG = '[' + STR_APP_NAME + '] Shutdown threshold reached - OS shutdown schedule skipped in DEBUG build (delay %d s)';
  STR_MSG_SHUTDOWN_ABORT_DEBUG     = '[' + STR_APP_NAME + '] Mains restored - OS shutdown abort skipped in DEBUG build';
+ STR_MSG_CONFIG_MISSING_DEFAULTS  = '[' + STR_APP_NAME + '] Config file missing - writing factory defaults (default password admin)';
+ STR_MSG_CONFIG_CORRUPT_REPAIR    = '[' + STR_APP_NAME + '] Config unreadable/corrupt - backed up and restored factory defaults (default password admin): %s';
+ STR_MSG_CONFIG_EMPTY_PASSWORD    = '[' + STR_APP_NAME + '] Config password_hash empty - writing default admin hash';
+ STR_MSG_SILENT_EXCEPT_DEBUG      = '[' + STR_APP_NAME + '] Silent exception in %s: %s';
+ STR_CONFIG_BACKUP_SUFFIX         = '.bak';
+ // Canonical Windows service DisplayName. Keep in sync with:
+ // Windows/Setup_SkupLink.nsi !define SERVICE_DISPLAY_NAME
+ // Windows/service-install.bat and service-uninstall.bat
  STR_SERVICE_DISPLAY_NAME         = STR_APP_NAME + ' UPS SNMP Agent';
  STR_SERVICE_DESCRIPTION          = 'SNMP UPS monitor, HTTP API and web UI for SKUP cards. Shuts down the PC on low battery';
 
@@ -128,11 +135,20 @@ function IsValidSnmpVersion(const pVersion: string): Boolean;
 function NormalizeSnmpVersion(const pVersion: string): string;
 function SnmpVersionToWire(const pVersion: string): Integer;
 function ShutdownWarningMessage: string;
+// DEBUG-only; no-op in RELEASE (critical-path silent except instrumentation).
+procedure DebugLogSilentExcept(const pWhere, pMessage: string);
 
 implementation
 
 uses
  System.SysUtils{$IFDEF MSWINDOWS}, Winapi.Windows{$ENDIF};
+
+procedure DebugLogSilentExcept(const pWhere, pMessage: string);
+ begin
+{$IFDEF DEBUG}
+  Writeln(Format(STR_MSG_SILENT_EXCEPT_DEBUG, [pWhere, pMessage]));
+{$ENDIF}
+ end;
 
 function IsValidSnmpVersion(const pVersion: string): Boolean;
  var

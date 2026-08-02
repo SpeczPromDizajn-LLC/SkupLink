@@ -35,7 +35,12 @@ uses
  uConsoleApp in 'uConsoleApp.pas';
 
 begin
+ // Seed PRNG once for SNMP Request IDs (uSnmpUpsClient) and any Random use.
+ Randomize;
+
+{$IFDEF DEBUG}
  ReportMemoryLeaksOnShutdown := TRUE;
+{$ENDIF}
 
  try
 {$IFDEF DEBUG}

@@ -39,7 +39,6 @@ type
   procedure RunUntilStopped;
 
   property Config: TAppConfig read FConfig;
-  property Snmp: TSnmpUpsClient read FSnmp;
  end;
 
 implementation
@@ -69,6 +68,8 @@ procedure TPollThread.Execute;
     try
      FHost.FSnmp.PollOnce;
     except
+     on E: Exception do
+      DebugLogSilentExcept('TPollThread.Execute', E.Message);
     end;
 
     if Terminated then
@@ -88,6 +89,8 @@ constructor TServiceHost.Create;
   try
    FConfig.Load;
   except
+   on E: Exception do
+    DebugLogSilentExcept('TServiceHost.Create.Load', E.Message);
   end;
 
   FHistory := THistoryStore.Create;
@@ -133,7 +136,7 @@ procedure TServiceHost.Start;
     FHttp.Stop;
    except
     on E: Exception do
-     ;
+     DebugLogSilentExcept('TServiceHost.Start.HttpStop', E.Message);
    end;
 
    raise;
@@ -163,7 +166,7 @@ procedure TServiceHost.Stop;
    FHttp.Stop;
   except
    on E: Exception do
-    ;
+    DebugLogSilentExcept('TServiceHost.Stop.HttpStop', E.Message);
   end;
 
   FStarted := FALSE;

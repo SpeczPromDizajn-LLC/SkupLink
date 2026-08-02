@@ -12,8 +12,7 @@ uses
  Vcl.Controls,
  Vcl.Forms,
  Vcl.ExtCtrls,
- Vcl.Menus,
- IdHTTP;
+ Vcl.Menus;
 
 type
  TTrayMode = (tmOffline, tmMains, tmBattery);
@@ -30,7 +29,6 @@ type
   procedure miOpenClick(Sender: TObject);
   procedure miExitClick(Sender: TObject);
  private
-  FHttp:      TIdHTTP;
   FMode:      TTrayMode;
   FCharge:    Integer;
   FIconOff:   TIcon;
@@ -38,12 +36,15 @@ type
   FIconBat:   TIcon;
   FTrayAdded: Boolean;
   FHint:      string;
+  FPollBusy:  Integer;
+  FStopping:  Boolean;
   procedure FillTrayData(var pNid: TNotifyIconData; pIcon: TIcon);
   procedure TrayAddOrModify(pIcon: TIcon; pAdd: Boolean);
   procedure ApplyState(pMode: TTrayMode; pCharge: Integer);
   procedure ShowNoLink;
   procedure OpenWebUi;
   procedure PollOnce;
+  procedure WaitPollIdle;
   procedure WMTray(var Message: TMessage); message WM_USER + 42;
  public
  end;
@@ -57,9 +58,13 @@ implementation
 {$R tray_icons.res}
 
 uses
+ IdHTTP,
  REST.Json,
  Common,
  uApiModels;
+
+var
+ GTrayAlive: Boolean = FALSE;
 
 procedure LoadIconRes(pIcon: TIcon; const pResName: string);
  var
@@ -142,6 +147,9 @@ procedure TFormTray.FormCreate(Sender: TObject);
   FCharge := -1;
   FHint := STR_HINT_NO_LINK;
   FTrayAdded := FALSE;
+  FPollBusy := 0;
+  FStopping := FALSE;
+  GTrayAlive := TRUE;
 
   FIconOff := TIcon.Create;
   FIconMain := TIcon.Create;
@@ -150,16 +158,26 @@ procedure TFormTray.FormCreate(Sender: TObject);
   LoadIconRes(FIconMain, 'TRAY_MAINS');
   LoadIconRes(FIconBat, 'TRAY_BATTERY');
 
-  FHttp := TIdHTTP.Create(nil);
-  FHttp.ConnectTimeout := HTTP_CONNECT_TIMEOUT_MS;
-  FHttp.ReadTimeout := HTTP_READ_TIMEOUT_MS;
-  FHttp.HandleRedirects := TRUE;
-
   TrayAddOrModify(FIconOff, TRUE);
 
   TimerPoll.Interval := TRAY_POLL_INTERVAL_MS;
   TimerPoll.Enabled := TRUE;
   PollOnce;
+ end;
+
+procedure TFormTray.WaitPollIdle;
+ var
+  Deadline: UInt64;
+
+ begin
+  // Pump queued apply callbacks so FPollBusy can clear on this thread.
+  Deadline := GetTickCount64 + UInt64(HTTP_CONNECT_TIMEOUT_MS + HTTP_READ_TIMEOUT_MS + 2000);
+
+  while (InterlockedCompareExchange(FPollBusy, 0, 0) <> 0) and (GetTickCount64 < Deadline) do
+   begin
+    Application.ProcessMessages;
+    Sleep(10);
+   end;
  end;
 
 procedure TFormTray.FormDestroy(Sender: TObject);
@@ -168,6 +186,9 @@ procedure TFormTray.FormDestroy(Sender: TObject);
 
  begin
   TimerPoll.Enabled := FALSE;
+  FStopping := TRUE;
+  WaitPollIdle;
+  GTrayAlive := FALSE;
 
   if FTrayAdded then
    begin
@@ -177,7 +198,6 @@ procedure TFormTray.FormDestroy(Sender: TObject);
     FTrayAdded := FALSE;
    end;
 
-  FreeAndNil(FHttp);
   FreeAndNil(FIconOff);
   FreeAndNil(FIconMain);
   FreeAndNil(FIconBat);
@@ -186,6 +206,8 @@ procedure TFormTray.FormDestroy(Sender: TObject);
 procedure TFormTray.ApplyState(pMode: TTrayMode; pCharge: Integer);
  var
   Icon: TIcon;
+  NewHint: string;
+  HintChanged: Boolean;
 
  begin
   case pMode of
@@ -199,17 +221,20 @@ procedure TFormTray.ApplyState(pMode: TTrayMode; pCharge: Integer);
   end;
 
   if pMode = tmOffline then
-   FHint := STR_HINT_NO_SNMP
+   NewHint := STR_HINT_NO_SNMP
   else
    if pCharge < 0 then
-    FHint := STR_HINT_CHARGE_NA
+    NewHint := STR_HINT_CHARGE_NA
    else
-    FHint := Format(STR_HINT_CHARGE_FMT, [pCharge]);
+    NewHint := Format(STR_HINT_CHARGE_FMT, [pCharge]);
+
+  HintChanged := NewHint <> FHint;
+  FHint := NewHint;
 
   if not FTrayAdded then
    TrayAddOrModify(Icon, TRUE)
   else
-   if (pMode <> FMode) or (pCharge <> FCharge) then
+   if (pMode <> FMode) or (pCharge <> FCharge) or HintChanged then
     TrayAddOrModify(Icon, FALSE);
 
   FMode := pMode;
@@ -233,56 +258,89 @@ procedure TFormTray.OpenWebUi;
  end;
 
 procedure TFormTray.PollOnce;
- var
-  Url:    string;
-  Body:   string;
-  Tray:   TApiTrayStatus;
-  Mode:   TTrayMode;
-  Charge: Integer;
-
  begin
-  if FHttp = nil then
+  if FStopping then
    Exit;
 
-  Url := Format(STR_URL_TRAY_API, [HTTP_PORT]);
-
-  try
-   Body := FHttp.Get(Url);
-  except
-   ShowNoLink;
+  // Skip / coalesce: one in-flight GET at a time.
+  if InterlockedCompareExchange(FPollBusy, 1, 0) <> 0 then
    Exit;
-  end;
 
-  try
-   Tray := TJson.JsonToObject<TApiTrayStatus>(Body);
-  except
-   Tray := nil;
-  end;
+  TThread.CreateAnonymousThread(
+   procedure
+    var
+     Http:    TIdHTTP;
+     Url:     string;
+     Body:    string;
+     Tray:    TApiTrayStatus;
+     Mode:    TTrayMode;
+     Charge:  Integer;
+     NoLink:  Boolean;
 
-  if Tray = nil then
-   begin
-    ShowNoLink;
-    Exit;
-   end;
+    begin
+     NoLink := TRUE;
+     Mode := tmOffline;
+     Charge := -1;
+     Http := nil;
+     Tray := nil;
 
-  try
-   if (not Tray.ok) or (not Tray.snmp_connected) then
-    Mode := tmOffline
-   else
-    if Tray.on_battery then
-     Mode := tmBattery
-    else
-     Mode := tmMains;
+     try
+      try
+       Http := TIdHTTP.Create(nil);
+       Http.ConnectTimeout := HTTP_CONNECT_TIMEOUT_MS;
+       Http.ReadTimeout := HTTP_READ_TIMEOUT_MS;
+       Http.HandleRedirects := TRUE;
 
-   Charge := Tray.charge_percent;
+       Url := Format(STR_URL_TRAY_API, [HTTP_PORT]);
+       Body := Http.Get(Url);
 
-   if Mode = tmOffline then
-    Charge := -1;
+       try
+        Tray := TJson.JsonToObject<TApiTrayStatus>(Body);
+       except
+        Tray := nil;
+       end;
 
-   ApplyState(Mode, Charge);
-  finally
-   Tray.Free;
-  end;
+       if Tray <> nil then
+        begin
+         NoLink := FALSE;
+
+         if (not Tray.ok) or (not Tray.snmp_connected) then
+          Mode := tmOffline
+         else
+          if Tray.on_battery then
+           Mode := tmBattery
+          else
+           Mode := tmMains;
+
+         Charge := Tray.charge_percent;
+
+         if Mode = tmOffline then
+          Charge := -1;
+        end;
+      except
+       NoLink := TRUE;
+      end;
+     finally
+      Tray.Free;
+      Http.Free;
+     end;
+
+     TThread.Queue(nil,
+      procedure
+       begin
+        try
+         if GTrayAlive and (not FStopping) then
+          begin
+           if NoLink then
+            ShowNoLink
+           else
+            ApplyState(Mode, Charge);
+          end;
+        finally
+         InterlockedExchange(FPollBusy, 0);
+        end;
+       end);
+    end).Start;
  end;
 
 procedure TFormTray.TimerPollTimer(Sender: TObject);

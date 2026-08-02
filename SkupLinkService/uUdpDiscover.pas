@@ -266,6 +266,8 @@ function TUdpDiscover.Scan: string;
          try
           Server.Send(Broadcasts[i], UDP_DISCOVER_PORT, UDP_DISCOVER_QUERY);
          except
+          on E: Exception do
+           DebugLogSilentExcept('TUdpDiscover.Scan.Send', E.Message);
          end;
 
         NextSendMs := Sw.ElapsedMilliseconds + UDP_DISCOVER_SEND_EVERY_MS;

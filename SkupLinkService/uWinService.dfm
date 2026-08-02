@@ -1,5 +1,5 @@
 object SkupLinkService: TSkupLinkService
-  OldCreateOrder = False
+  OnCreate = ServiceCreate
   DisplayName = 'SkupLink UPS SNMP Agent'
   AfterInstall = ServiceAfterInstall
   OnShutdown = ServiceShutdown

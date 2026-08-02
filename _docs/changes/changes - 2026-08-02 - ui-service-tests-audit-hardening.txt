@@ -1,0 +1,297 @@
+Дата: 2026-08-02
+
+Тема: Укрепление Web UI, сервиса, tray и тестовой инфраструктуры после аудита
+Продукт: SkupLink (Service + Tray + Linux/web + installer)
+
+Область работ:
+
+- аудит и правки Web UI (форматирование, мёртвый код, i18n, локальные шрифты);
+- hardening Delphi-сервиса (конфиг, auth/sessions, shutdown abort, SNMP/HTTP/Linux);
+- tray: hint и фоновый HTTP-опрос;
+- NSIS: установка web/fonts;
+- тесты: tests/web, tests/contracts, tests/delphi + bat-раннеры;
+- документация EN/RU;
+- синхронизация рабочих копий trunk ↔ GitHub.
+
+Delphi IDE / полная сборка Release-инсталлятора ассистентом не запускались.
+Проверки: node --test (web/contracts); DUnitX — через project group / bat при наличии RAD Studio.
+
+
+================================================================================
+1. Цель / контекст
+================================================================================
+
+После серии аудитов UI и Delphi-кода требовалось:
+
+  - убрать внешнюю зависимость Google Fonts и закрепить локальные Manrope/Sora;
+  - закрыть найденные дефекты сервиса (конфиг/пароль, shutdown, sessions,
+    partial SNMP, HEAD статики, Linux discover);
+  - ввести повторяемые тесты (UI/DOM/CSS/lang, API-контракты, DUnitX);
+  - синхронизировать деревья SkupLinkService/web ↔ Linux/web и копии
+    trunk (SVN-style) ↔ GitHub-репозиторий.
+
+================================================================================
+2. Web UI
+================================================================================
+
+Что сделано:
+
+- Форматирование app.js / app.css / index.html / lang.js; удаление мёртвого кода.
+- i18n: единицы измерения и недостающие ключи; fillSettingsForm — единая
+  заливка формы настроек при boot / refresh.
+- Локальные шрифты Manrope (latin + cyrillic, 400/500/600/700) и Sora
+  (latin 500/600/700) через @font-face; без Google Fonts CDN.
+  Рядом с .woff2 лежат OFL.txt (manrope/, sora/).
+- Цвета canvas/chart берутся из CSS-переменных (getComputedStyle /
+  --teal, --amber, --chart-*, --muted и т.д.), а не хардкодом в JS.
+- Content-Type: application/json выставляется только при наличии JSON-тела
+  (не на «пустых» GET).
+- Status pill:
+    янтарный (pill-warn) — «ИБП без SNMP» / нет SNMP-данных;
+    красный (pill-err)   — нет связи с сервером;
+    зелёный (pill-ok)    — штатная связь.
+- Убраны декоративные bg-orb из разметки/стилей.
+- Синхронизация деревьев: SkupLinkService/web ↔ Linux/web
+  (контролируется tests/web/web-tree-sync.test.js).
+
+Файлы (основные):
+
+  SkupLinkService/web/app.js
+  SkupLinkService/web/app.css
+  SkupLinkService/web/index.html
+  SkupLinkService/web/lang.js
+  SkupLinkService/web/fonts/manrope/*  (+ OFL.txt)
+  SkupLinkService/web/fonts/sora/*     (+ OFL.txt)
+  Linux/web/…                          (зеркало)
+
+================================================================================
+3. Установщик (NSIS)
+================================================================================
+
+Проблема:
+  После перехода на локальные шрифты инсталлятор не копировал web/fonts,
+  UI после установки падал на отсутствующие woff2.
+
+Что сделано:
+
+  Windows/Setup_SkupLink.nsi —
+    SetOutPath $INSTDIR\web\fonts\manrope  + File *.*
+    SetOutPath $INSTDIR\web\fonts\sora     + File *.*
+  (включая OFL.txt).
+
+Проверка: пересборка NSIS и визуальный smoke UI после установки — на стороне
+пользователя.
+
+================================================================================
+4. Тесты
+================================================================================
+
+4.1. tests/web — UI / DOM / CSS / lang / links / syntax
+
+  - syntax.test.js          — синтаксис JS/HTML/CSS
+  - links.test.js           — локальные ссылки (css/js/fonts)
+  - html-ids.test.js        — уникальность HTML id
+  - lang.test.js / lang-unit.test.js — parity ru/en + VM unit SLLang
+  - dom-contracts.test.js   — DOM ids, используемые app.js
+  - css-contracts.test.js   — used → defined (+ unused report)
+  - web-tree-sync.test.js   — parity SkupLinkService/web ↔ Linux/web
+  - run-web-tests.bat       — STRICT: HTML_ID/LANG_UNUSED/CSS_UNUSED = fail
+
+4.2. tests/contracts — API-поля и сверка Service ↔ Tray
+
+  - api-field-contracts.test.js — фикстуры покрывают поля, которые читает
+    app.js (ups / history / settings / tray / login / discover / health)
+  - service-tray-sync.test.js — HTTP_PORT и TApiTrayStatus совпадают между
+    Service и Tray; writers/readers и tray-фикстуры согласованы
+  - fixtures/api/*.json
+  - run-contracts-tests.bat — STRICT: API_CONTRACT_MODE = fail
+
+4.3. tests/delphi — DUnitX
+
+  - SkupLinkTests.dpr / .dproj — консольный runner (Delphi 12)
+  - TestDetectTopology.pas    — TUpsSnapshot.DetectTopology
+  - TestNormalizeSnmpVersion.pas — NormalizeSnmpVersion
+  - проект в SkupLink_ProjectGroup.groupproj (цель SkupLinkTests;
+    не входит в групповые Build/Clean/Make service+tray)
+  - run-delphi-tests.bat
+  - README.md (RU) + README.en.md
+
+Общие хелперы: tests/lib/test-utils.js.
+
+================================================================================
+5. Delphi (сервис) — фиксы аудита
+================================================================================
+
+5.1. Конфиг / пароль
+
+Проблема:
+  Битый или пустой config.json мог оставлять систему без рабочего admin-hash;
+  HashPassword на горячем пути Snapshot/Normalize давал лишнюю нагрузку PBKDF2
+  на каждый SNMP-poll.
+
+Что сделано (uAppConfig.pas):
+  - missing/corrupt → ResetToFactoryDefaults + admin hash;
+  - пустой password_hash после успешного parse → один раз HashPassword(admin)
+    и persist;
+  - Normalize/Snapshot не вызывают HashPassword (только AssignFrom/Load/
+    factory path).
+
+5.2. Shutdown watch
+
+Проблема:
+  После старта OS shutdown при восстановлении заряда выше порога shutdown
+  не отменялся.
+
+Что сделано (uShutdownWatch.pas):
+  - AbortOsShutdown при charge_percent > shutdown_battery_percent
+    (и связанные ветки восстановления сети / ухода с батареи).
+
+5.3. Смена пароля и сессии
+
+Что сделано (uAuth.pas):
+  - ChangePassword инвалидирует чужие сессии;
+  - опциональный pKeepToken сохраняет текущую сессию вызывающего.
+
+5.4. Linux discover / NIC / settings JSON
+
+Что сделано:
+  - uNetInterfaces: getifaddrs для перечисления интерфейсов на Linux;
+  - буфер имени NIC увеличен до 128;
+  - невалидный settings JSON → HTTP 400 (вместо «тихого» сбоя).
+
+5.5. HTTP статика / SNMP snapshot
+
+Что сделано (uHttpApiServer / uSnmpUpsClient):
+  - HEAD для статики: заголовки Content-Type / Content-Length без TFileStream
+    на тело;
+  - при ошибке опроса сброс partial SNMP snapshot → чистый offline snapshot.
+
+5.6. Прочее hardening / cleanup
+
+  - DEBUG-логи тихих except (вместо полного проглатывания);
+  - Randomize при старте (соль/токены);
+  - POSIX: sigaction вместо signal для SIGINT/SIGTERM (uConsoleApp);
+  - DisplayName Windows-сервиса из одной константы STR_SERVICE_DISPLAY_NAME
+    (Common.pas ↔ uWinService);
+  - cleanup uses / неиспользуемых символов / FLastSnapshot.
+
+Затронутые модули (основные):
+
+  SkupLinkService/Common.pas
+  SkupLinkService/uAppConfig.pas
+  SkupLinkService/uAuth.pas
+  SkupLinkService/uHttpApiServer.pas
+  SkupLinkService/uNetInterfaces.pas
+  SkupLinkService/uShutdownWatch.pas
+  SkupLinkService/uSnmpUpsClient.pas
+  SkupLinkService/uConsoleApp.pas
+  SkupLinkService/uWinService.pas / .dfm
+  SkupLinkService/uUdpDiscover.pas
+  SkupLinkService/uServiceHost.pas
+  SkupLinkService/SkupLink.dpr
+  (+ связанные uApiModels / sync с tray Common / uApiModels)
+
+================================================================================
+6. Delphi (tray)
+================================================================================
+
+Проблема:
+  Hint в tray не обновлялся при смене только текста (при том же mode/charge);
+  HTTP-опрос API блокировал UI-поток.
+
+Что сделано (SkupLinkTray/uMain.pas):
+  - сравнение NewHint <> FHint → обновление иконки/tip при смене текста;
+  - HTTP GET /api/tray в TThread.CreateAnonymousThread + TThread.Queue
+    для применения результата в UI.
+
+Синхронизация констант/моделей: SkupLinkTray/Common.pas, uApiModels.pas
+(контроль tests/contracts/service-tray-sync).
+
+================================================================================
+7. Документация
+================================================================================
+
+EN:
+  _docs/README.en.md
+  _docs/web-ui.en.md
+  _docs/api/api-scheme-en.txt
+  tests/web/README.en.md
+  tests/contracts/README.en.md
+  tests/delphi/README.en.md
+
+RU:
+  tests/delphi/README.md
+  (а также актуализация CONTRIBUTING.md / CONTRIBUTING.en.md по ходу сессии)
+
+Существующие RU: _docs/README.md, _docs/web-ui.md, _docs/api/api-scheme.txt.
+
+================================================================================
+8. Синхронизация trunk ↔ GitHub
+================================================================================
+
+Рабочие копии:
+
+  SVN-style trunk:
+    D:\PROJECTS\Soft\Programs\SkupLink\trunk\
+
+  Публичный / git-клон:
+    D:\GIT-HUB\SkupLink\
+
+Практика сессии:
+  - правки ведутся с учётом обеих копий (web, service, tray, tests, docs);
+  - отчёты _docs/changes дублируются в trunk и в GitHub `_docs/changes/`;
+  - деревья web зеркалятся Service ↔ Linux внутри репозитория;
+  - контрактные тесты ловят расхождение HTTP_PORT / TApiTrayStatus между
+    Service и Tray.
+
+При переносе между trunk и GitHub сверять:
+  - SkupLinkService/web ↔ Linux/web;
+  - Common.pas / uApiModels.pas (Service ↔ Tray);
+  - Windows/Setup_SkupLink.nsi (fonts);
+  - tests/* и _docs/*.
+
+================================================================================
+9. Файлы изменений (сводка)
+================================================================================
+
+Web:
+  SkupLinkService/web/*
+  Linux/web/*
+
+Installer:
+  Windows/Setup_SkupLink.nsi
+
+Service:
+  SkupLinkService/*.pas, SkupLink.dpr, uWinService.dfm
+
+Tray:
+  SkupLinkTray/uMain.pas, Common.pas, uApiModels.pas, SkupLinkTray.dpr
+
+Tests:
+  tests/web/*
+  tests/contracts/*
+  tests/delphi/*
+  tests/lib/test-utils.js
+  tests/run-web-tests.bat
+  tests/run-contracts-tests.bat
+  tests/run-delphi-tests.bat
+  SkupLink_ProjectGroup.groupproj
+
+Docs:
+  _docs/README.en.md
+  _docs/web-ui.en.md
+  _docs/api/api-scheme-en.txt
+  tests/*/README*.md
+  CONTRIBUTING.md / CONTRIBUTING.en.md
+  _docs/changes/changes - 2026-08-02 - ui-service-tests-audit-hardening.txt
+
+================================================================================
+10. Не проверено локально агентом
+================================================================================
+
+- Полная сборка SkupLinkService / SkupLinkTray в RAD Studio (Release).
+- Пересборка NSIS-инсталлятора и установка на чистую машину.
+- Визуальный smoke Web UI после установки (шрифты, pill, charts).
+- Реальный сценарий OS shutdown / AbortSystemShutdown на стенде с ИБП.
+- Сборка и прогон DUnitX, если на машине агента нет нужного DUnitX Win32/Win64.
+- Linux getifaddrs / discover на реальном Linux64-стенде.

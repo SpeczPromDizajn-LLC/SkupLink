@@ -1,0 +1,18 @@
+{
+  "name": "skuplink-web-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test \"*.test.js\"",
+    "test:syntax": "node --test syntax.test.js",
+    "test:links": "node --test links.test.js",
+    "test:html-ids": "node --test html-ids.test.js",
+    "test:lang": "node --test lang.test.js lang-unit.test.js",
+    "test:sync": "node --test web-tree-sync.test.js",
+    "test:dom": "node --test dom-contracts.test.js html-ids.test.js",
+    "test:css": "node --test css-contracts.test.js",
+    "test:tier0": "node --test syntax.test.js links.test.js html-ids.test.js lang.test.js web-tree-sync.test.js",
+    "test:tier1": "node --test dom-contracts.test.js css-contracts.test.js lang-unit.test.js"
+  }
+}

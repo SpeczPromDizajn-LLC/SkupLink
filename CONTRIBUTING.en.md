@@ -41,6 +41,10 @@ Build to verify:
 - Windows: `SkupLinkService/SkupLink.dproj` (Debug/Release), and `SkupLinkTray` if needed;
 - Linux: Release / Linux64.
 
+## Development notes
+
+Substantial parts of this project were developed with AI-assisted tooling (Grok / Cursor).
+
 ## Contact
 
 Licensing and commercial use: **info@spd.net.ru** · [spd.net.ru](https://spd.net.ru)

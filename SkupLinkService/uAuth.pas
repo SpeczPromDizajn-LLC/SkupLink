@@ -14,12 +14,6 @@ uses
  uAppConfig;
 
 type
- TAuthSession = record
- public
-  Token:     string;
-  ExpiresAt: TDateTime;
- end;
-
  TAuthService = class
  private
   FConfig:   TAppConfig;
@@ -33,7 +27,8 @@ type
   function Login(const pPassword: string; out pToken: string): Boolean;
   procedure Logout(const pToken: string);
   function IsValidToken(const pToken: string): Boolean;
-  function ChangePassword(const pOldPassword, pNewPassword: string): Boolean;
+  // Clears all sessions on success; optional pKeepToken keeps the caller logged in.
+  function ChangePassword(const pOldPassword, pNewPassword: string; const pKeepToken: string = ''): Boolean;
  end;
 
 implementation
@@ -142,9 +137,10 @@ function TAuthService.IsValidToken(const pToken: string): Boolean;
   end;
  end;
 
-function TAuthService.ChangePassword(const pOldPassword, pNewPassword: string): Boolean;
+function TAuthService.ChangePassword(const pOldPassword, pNewPassword: string; const pKeepToken: string): Boolean;
  var
   Snap: TAppConfigData;
+  Keep: string;
 
  begin
   if Length(Trim(pNewPassword)) < 4 then
@@ -158,6 +154,19 @@ function TAuthService.ChangePassword(const pOldPassword, pNewPassword: string): 
 
    Snap.password_hash := HashPassword(Trim(pNewPassword));
    FConfig.UpdateFrom(Snap);
+
+   Keep := Trim(pKeepToken);
+
+   FLock.Enter;
+   try
+    FSessions.Clear;
+
+    if Keep <> '' then
+     FSessions.AddOrSetValue(Keep, IncSecond(Now, AUTH_SESSION_TTL_SECONDS));
+   finally
+    FLock.Leave;
+   end;
+
    Result := TRUE;
   finally
    Snap.Free;

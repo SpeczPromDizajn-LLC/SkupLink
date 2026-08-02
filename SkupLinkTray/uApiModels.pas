@@ -8,6 +8,7 @@ uses
  System.SysUtils;
 
 type
+ // Держать синхронно / keep in sync: SkupLinkService/uApiModels.pas TApiTrayStatus
  TApiTrayStatus = class
  private
   Fok:             Boolean;

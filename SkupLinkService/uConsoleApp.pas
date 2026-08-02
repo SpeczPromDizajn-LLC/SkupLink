@@ -40,13 +40,20 @@ procedure PosixSignalHandler(SigNum: Integer); cdecl;
 {$ENDIF}
 
 procedure RunConsoleMode;
+{$IFDEF POSIX}
+ var
+  Action: sigaction_t;
+{$ENDIF}
  begin
 {$IFDEF MSWINDOWS}
   SetConsoleCtrlHandler(@ConsoleCtrlHandler, TRUE);
 {$ENDIF}
 {$IFDEF POSIX}
-  Signal(SIGINT, PosixSignalHandler);
-  Signal(SIGTERM, PosixSignalHandler);
+  FillChar(Action, SizeOf(Action), 0);
+  Action._u.sa_handler := PosixSignalHandler;
+  sigemptyset(Action.sa_mask);
+  sigaction(SIGINT, @Action, nil);
+  sigaction(SIGTERM, @Action, nil);
 {$ENDIF}
   GHost := TServiceHost.Create;
 

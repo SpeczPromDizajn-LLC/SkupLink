@@ -1,0 +1,78 @@
+API
+Auth: Bearer / X-Auth-Token (except /health, /api/tray, /api/login and web/ static)
+Content-Type: application/json; charset=utf-8
+JSON keys: snake_case
+Default password: admin
+
+/
+├─ GET  /                                         Web UI (web/index.html)
+├─ GET  /*.{css,js,…}                             Static files from web/ directory
+│
+├─ /health
+│  └─ GET  /                                      Liveness (no auth)
+│      response: {"ok":true}
+│
+└─ /api
+   ├─ /tray
+   │  └─ GET  /                                   Status for tray icon (no auth)
+   │      response:
+   │        ok                                    bool
+   │        snmp_connected                        bool
+   │        on_battery                            bool
+   │        charge_percent                        int (-1 if unavailable)
+   │
+   ├─ /login
+   │  └─ POST /                                   Sign in
+   │      body: { password }
+   │      response: { ok, token }
+   │
+   ├─ /logout
+   │  └─ POST /                                   Sign out (auth)
+   │
+   ├─ /password
+   │  └─ POST /                                   Change password (auth)
+   │      body: { old_password, new_password }
+   │
+   ├─ /ups
+   │  └─ GET  /                                   SNMP snapshot (auth)
+   │      response:
+   │        ident.*                               string
+   │        topology                              string
+   │        input / output / battery…             see model
+   │        battery.charge_percent                int (-1 if OID unavailable)
+   │        snmp_connected                        bool
+   │
+   ├─ /history
+   │  └─ GET  /                                   History for charts (auth)
+   │      response:
+   │        samples[]:
+   │          ts                                  ISO8601
+   │          input_voltages[]                    float (per phase)
+   │          output_voltages[]                   float (per phase)
+   │          load_percents[]                     float (per output phase)
+   │          battery_voltage                     float
+   │          charge_percent                      float
+   │
+   ├─ /discover
+   │  ├─ GET  /                                   Device discovery via UDP broadcast (auth)
+   │  └─ POST /                                   Same (auth)
+   │      response:
+   │        ok                                    bool
+   │        devices[]:
+   │          ip, name, version, rev, mac, uid    string
+   │          device_id                           int
+   │        broadcasts[]                          string (subnets where 'I' was sent)
+   │      note: ~3 s, port 51847, request 'I' to broadcast of all NIC/VPN
+   │
+   └─ /settings
+      ├─ GET  /                                   Settings without password_hash (auth)
+      │   response:
+      │     snmp_host                             string
+      │     snmp_community                        string
+      │     snmp_version                          string ("1" | "2c")
+      │     shutdown_battery_percent              int (1..99)
+      │     shutdown_delay_seconds                int (0..7200)
+      │
+      └─ POST /                                   Full public settings (auth)
+          body: snmp_host, snmp_community, snmp_version, shutdown_battery_percent, shutdown_delay_seconds
+          errors: 400 / 401 / 404 / 405

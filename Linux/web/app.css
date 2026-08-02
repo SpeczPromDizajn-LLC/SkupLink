@@ -1,9 +1,105 @@
+/* Self-hosted OFL fonts (see web/fonts/.../OFL.txt). Sora has no Cyrillic — Manrope covers RU. */
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-cyrillic-400-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-cyrillic-500-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-600-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-cyrillic-600-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/manrope/manrope-cyrillic-700-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/sora/sora-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/sora/sora-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/sora/sora-latin-700-normal.woff2") format("woff2");
+}
+
 :root {
   --bg0: #eef2f4;
   --bg1: #f7f9fa;
   --ink: #13212b;
   --muted: #5b6b76;
-  --line: rgba(19, 33, 43, 0.10);
+  --line: rgba(19, 33, 43, 0.1);
   --line-strong: rgba(19, 33, 43, 0.16);
   --teal: #0f766e;
   --teal-deep: #0b5f59;
@@ -11,6 +107,10 @@
   --amber: #c47a14;
   --rose: #b42318;
   --ok: #1f7a4c;
+  --chart-phase-blue: #2563eb;
+  --chart-battery: #b45309;
+  --chart-grid: rgba(19, 33, 43, 0.08);
+  --chart-bg: #f7fafb;
   --surface: #ffffff;
   --surface-soft: rgba(255, 255, 255, 0.72);
   --radius: 14px;
@@ -19,16 +119,26 @@
   --display: "Sora", "Manrope", sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   margin: 0;
   min-height: 100%;
   font-family: var(--font);
   color: var(--ink);
-  background:
-    radial-gradient(900px 480px at 8% -8%, rgba(15, 118, 110, 0.10), transparent 55%),
-    radial-gradient(700px 420px at 96% 0%, rgba(15, 118, 110, 0.06), transparent 50%),
+  background: radial-gradient(
+      900px 480px at 8% -8%,
+      rgba(15, 118, 110, 0.1),
+      transparent 55%
+    ),
+    radial-gradient(
+      700px 420px at 96% 0%,
+      rgba(15, 118, 110, 0.06),
+      transparent 50%
+    ),
     linear-gradient(180deg, var(--bg0), var(--bg1) 40%, #f3f6f8);
 }
 
@@ -37,7 +147,9 @@ body {
   overflow-x: hidden;
 }
 
-[hidden] { display: none !important; }
+[hidden] {
+  display: none !important;
+}
 
 html.sl-session #view-login,
 html.sl-guest #view-app {
@@ -46,31 +158,6 @@ html.sl-guest #view-app {
 
 html.sl-session:not(.sl-data-ready) #panel-overview {
   visibility: hidden;
-}
-
-.bg-orb {
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.45;
-  filter: blur(8px);
-}
-
-.bg-orb-a {
-  width: 380px;
-  height: 380px;
-  left: -100px;
-  top: 18%;
-  background: rgba(15, 118, 110, 0.10);
-}
-
-.bg-orb-b {
-  width: 300px;
-  height: 300px;
-  right: -80px;
-  bottom: 12%;
-  background: rgba(15, 118, 110, 0.07);
 }
 
 .brand-mark {
@@ -152,7 +239,9 @@ html.sl-session:not(.sl-data-ready) #panel-overview {
   padding: 0.55rem 0.95rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .lang-btn:hover {
@@ -171,12 +260,19 @@ html.sl-session:not(.sl-data-ready) #panel-overview {
   margin: 1rem 0 0.4rem;
 }
 
-.login-lead, .panel-sub, .muted, .help, .login-hint {
+.login-lead,
+.panel-sub,
+.muted,
+.help,
+.login-hint {
   color: var(--muted);
   line-height: 1.5;
 }
 
-.login-form, .form-block, .block, .metric {
+.login-form,
+.form-block,
+.block,
+.metric {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -223,7 +319,9 @@ select {
   color: var(--ink);
   background: var(--bg1);
   outline: none;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 select {
@@ -250,7 +348,11 @@ select:focus {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .btn:disabled {
@@ -290,8 +392,12 @@ select:focus {
   font-size: 0.9rem;
 }
 
-.form-msg.ok { color: var(--ok); }
-.form-msg.err { color: var(--rose); }
+.form-msg.ok {
+  color: var(--ok);
+}
+.form-msg.err {
+  color: var(--rose);
+}
 
 .host-row {
   display: flex;
@@ -339,7 +445,9 @@ select:focus {
   color: var(--ink);
   font: inherit;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .discover-item:hover {
@@ -399,12 +507,18 @@ select:focus {
 }
 
 .pill-ok {
-  background: rgba(31, 122, 76, 0.10);
+  background: rgba(31, 122, 76, 0.1);
   border-color: rgba(31, 122, 76, 0.18);
   color: var(--ok);
 }
 
 .pill-warn {
+  background: rgba(196, 122, 20, 0.12);
+  border-color: rgba(196, 122, 20, 0.22);
+  color: var(--amber);
+}
+
+.pill-err {
   background: rgba(180, 35, 24, 0.08);
   border-color: rgba(180, 35, 24, 0.16);
   color: var(--rose);
@@ -428,7 +542,9 @@ select:focus {
   padding: 0.5rem 0.85rem;
   border-radius: 9px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .tab:hover {
@@ -447,8 +563,12 @@ select:focus {
   margin: 0 auto;
 }
 
-.panel { display: none; }
-.panel.is-active { display: block; }
+.panel {
+  display: none;
+}
+.panel.is-active {
+  display: block;
+}
 
 .panel-head {
   margin-bottom: 1.25rem;
@@ -461,7 +581,9 @@ select:focus {
   letter-spacing: -0.03em;
 }
 
-.panel-sub { margin: 0; }
+.panel-sub {
+  margin: 0;
+}
 
 .metric-row {
   display: grid;
@@ -501,7 +623,9 @@ select:focus {
   padding-bottom: 0.2rem;
 }
 
-.overview-grid, .charts-grid, .settings-grid {
+.overview-grid,
+.charts-grid,
+.settings-grid {
   display: grid;
   gap: 0.85rem;
 }
@@ -510,7 +634,8 @@ select:focus {
   grid-template-columns: 0.9fr 1.1fr 1.2fr;
 }
 
-.charts-grid, .settings-grid {
+.charts-grid,
+.settings-grid {
   grid-template-columns: 1fr 1fr;
 }
 
@@ -544,19 +669,24 @@ select:focus {
   transform: rotate(-90deg);
 }
 
-.ring-track, .ring-value {
+.ring-track,
+.ring-value {
   fill: none;
   stroke-width: 10;
 }
 
-.ring-track { stroke: rgba(19, 33, 43, 0.08); }
+.ring-track {
+  stroke: rgba(19, 33, 43, 0.08);
+}
 
 .ring-value {
   stroke: var(--teal);
   stroke-linecap: round;
   stroke-dasharray: 327;
   stroke-dashoffset: 327;
-  transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease;
+  transition:
+    stroke-dashoffset 0.8s ease,
+    stroke 0.3s ease;
 }
 
 .charge-center {
@@ -573,7 +703,10 @@ select:focus {
   letter-spacing: -0.04em;
 }
 
-.charge-center span { color: var(--muted); font-size: 0.85rem; }
+.charge-center span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
 
 .kv {
   margin: 0;
@@ -611,7 +744,9 @@ select:focus {
   margin-bottom: 0.15rem;
 }
 
-.phase-list:empty { display: none; }
+.phase-list:empty {
+  display: none;
+}
 
 .phase-item {
   display: flex;
@@ -624,7 +759,9 @@ select:focus {
   font-size: 0.92rem;
 }
 
-.phase-item strong { font-variant-numeric: tabular-nums; }
+.phase-item strong {
+  font-variant-numeric: tabular-nums;
+}
 
 .chart-block canvas {
   width: 100%;
@@ -640,7 +777,10 @@ select:focus {
   align-content: start;
 }
 
-.help { margin: 0; font-size: 0.88rem; }
+.help {
+  margin: 0;
+  font-size: 0.88rem;
+}
 
 @media (max-width: 980px) {
   .metric-row,

@@ -80,6 +80,7 @@ type
   property shutdown_delay_seconds: Integer read Fshutdown_delay_seconds write Fshutdown_delay_seconds;
  end;
 
+ // Держать синхронно / keep in sync: SkupLinkTray/uApiModels.pas TApiTrayStatus
  TApiTrayStatus = class
  private
   Fok:             Boolean;

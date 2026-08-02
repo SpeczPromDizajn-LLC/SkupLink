@@ -41,6 +41,10 @@
 - Windows: `SkupLinkService/SkupLink.dproj` (Debug/Release), при необходимости `SkupLinkTray`;
 - Linux: Release / Linux64.
 
+## Заметки о разработке
+
+Значительная часть проекта создана с помощью AI-инструментов (Grok / Cursor).
+
 ## Контакты
 
 Вопросы по лицензированию и коммерческому использованию: **info@spd.net.ru** · [spd.net.ru](https://spd.net.ru)

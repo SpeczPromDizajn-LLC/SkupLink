@@ -23,7 +23,6 @@ type
   FHistory:  THistoryStore;
   FShutdown: TShutdownWatch;
   FLock:           TCriticalSection;
-  FLastSnapshot:   TUpsSnapshot;
   FLastJson:       string;
   FPollWireVersion: Integer;
 
@@ -51,6 +50,9 @@ uses
  uSnmpOids;
 
 constructor TSnmpUpsClient.Create(pConfig: TAppConfig; pHistory: THistoryStore; pShutdown: TShutdownWatch);
+ var
+  Snap: TUpsSnapshot;
+
  begin
   inherited Create;
   FConfig := pConfig;
@@ -58,14 +60,18 @@ constructor TSnmpUpsClient.Create(pConfig: TAppConfig; pHistory: THistoryStore; 
   FShutdown := pShutdown;
   FLock := TCriticalSection.Create;
   FPollWireVersion := SNMP_WIRE_VERSION_1;
-  FLastSnapshot := TUpsSnapshot.Create;
-  FLastSnapshot.snmp_connected := FALSE;
-  FLastJson := SnapshotToJson(FLastSnapshot);
+  Snap := TUpsSnapshot.Create;
+
+  try
+   Snap.snmp_connected := FALSE;
+   FLastJson := SnapshotToJson(Snap);
+  finally
+   Snap.Free;
+  end;
  end;
 
 destructor TSnmpUpsClient.Destroy;
  begin
-  FLastSnapshot.Free;
   FLock.Free;
   inherited Destroy;
  end;
@@ -263,6 +269,9 @@ procedure TSnmpUpsClient.PollOnce;
    try
     PollInternal(Cfg, Snap);
    except
+    // Drop any mid-poll partial fields; publish a clean offline snapshot.
+    Snap.Free;
+    Snap := TUpsSnapshot.Create;
     Snap.snmp_connected := FALSE;
    end;
 
@@ -305,9 +314,6 @@ procedure TSnmpUpsClient.PollOnce;
    FLock.Enter;
 
    try
-    FLastSnapshot.Free;
-    FLastSnapshot := Snap;
-    Snap := nil;
     FLastJson := Json;
    finally
     FLock.Leave;

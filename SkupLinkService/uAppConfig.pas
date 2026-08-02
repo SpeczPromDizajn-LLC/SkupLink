@@ -31,6 +31,9 @@ type
 
   procedure AssignFrom(const pSource: TAppConfigData);
   procedure Normalize;
+  // Factory defaults + HashPassword(admin) once. For first-run / corrupt recovery only —
+  // never call from Snapshot/Normalize hot paths.
+  procedure ResetToFactoryDefaults;
  end;
 
  TAppConfig = class
@@ -40,6 +43,9 @@ type
   FFileName: string;
   function ResolveDefaultFileName: string;
   procedure SaveUnlocked;
+  procedure LogConfigNotice(const pMsg: string);
+  procedure BackupCorruptConfigFile;
+  procedure WriteFactoryDefaultsUnlocked(const pLogMsg: string);
  public
   constructor Create;
   destructor Destroy; override;
@@ -60,7 +66,8 @@ uses
  System.IOUtils,
  REST.JSON,
  uApiModels,
- uPasswordHash;
+ uPasswordHash{$IFDEF MSWINDOWS},
+ Winapi.Windows{$ENDIF};
 
 constructor TAppConfigData.Create;
  begin
@@ -71,7 +78,7 @@ constructor TAppConfigData.Create;
   Fshutdown_battery_percent := SHUTDOWN_BATTERY_PERCENT_DEFAULT;
   Fshutdown_delay_seconds := SHUTDOWN_DELAY_SECONDS_DEFAULT;
   // Do not HashPassword here — Snapshot() creates TAppConfigData often (SNMP poll).
-  // Empty hash is filled once in Normalize when persisting a new config.
+  // Default admin hash: ResetToFactoryDefaults (missing/corrupt) or Load (empty hash persist).
   Fpassword_hash := '';
  end;
 
@@ -108,8 +115,19 @@ procedure TAppConfigData.Normalize;
   if (Fshutdown_delay_seconds < 0) or (Fshutdown_delay_seconds > SHUTDOWN_DELAY_SECONDS_MAX) then
    Fshutdown_delay_seconds := SHUTDOWN_DELAY_SECONDS_DEFAULT;
 
-  if Fpassword_hash = '' then
-   Fpassword_hash := HashPassword(STR_DEFAULT_PASSWORD);
+  // Intentionally no HashPassword here: Snapshot/AssignFrom call Normalize every poll.
+ end;
+
+procedure TAppConfigData.ResetToFactoryDefaults;
+ begin
+  Fsnmp_host := STR_SNMP_HOST_DEFAULT;
+  Fsnmp_community := STR_SNMP_COMMUNITY_DEFAULT;
+  Fsnmp_version := STR_SNMP_VERSION_DEFAULT;
+  Fshutdown_battery_percent := SHUTDOWN_BATTERY_PERCENT_DEFAULT;
+  Fshutdown_delay_seconds := SHUTDOWN_DELAY_SECONDS_DEFAULT;
+  Fpassword_hash := '';
+  Normalize;
+  Fpassword_hash := HashPassword(STR_DEFAULT_PASSWORD);
  end;
 
 constructor TAppConfig.Create;
@@ -165,6 +183,57 @@ function TAppConfig.ResolveDefaultFileName: string;
 {$ENDIF}
  end;
 
+procedure TAppConfig.LogConfigNotice(const pMsg: string);
+ begin
+{$IFDEF MSWINDOWS}
+  OutputDebugString(PChar(pMsg));
+{$ENDIF}
+{$IFDEF DEBUG}
+  Writeln(pMsg);
+{$ENDIF}
+ end;
+
+procedure TAppConfig.BackupCorruptConfigFile;
+ var
+  BakName: string;
+
+ begin
+  if not TFile.Exists(FFileName) then
+   Exit;
+
+  BakName := FFileName + STR_CONFIG_BACKUP_SUFFIX;
+
+  if TFile.Exists(BakName) then
+   BakName := FFileName + '.' + FormatDateTime('yyyymmdd_hhnnss', Now) + STR_CONFIG_BACKUP_SUFFIX;
+
+  try
+   if TFile.Exists(BakName) then
+    TFile.Delete(BakName);
+
+   TFile.Move(FFileName, BakName);
+  except
+   on EMove: Exception do
+    begin
+     DebugLogSilentExcept('TAppConfig.BackupCorruptConfigFile.Move', EMove.Message);
+
+     try
+      TFile.Copy(FFileName, BakName, TRUE);
+      TFile.Delete(FFileName);
+     except
+      on ECopy: Exception do
+       DebugLogSilentExcept('TAppConfig.BackupCorruptConfigFile.Copy', ECopy.Message);
+     end;
+    end;
+  end;
+ end;
+
+procedure TAppConfig.WriteFactoryDefaultsUnlocked(const pLogMsg: string);
+ begin
+  FData.ResetToFactoryDefaults;
+  LogConfigNotice(pLogMsg);
+  SaveUnlocked;
+ end;
+
 procedure TAppConfig.SaveUnlocked;
  var
   JSON: string;
@@ -183,8 +252,9 @@ procedure TAppConfig.SaveUnlocked;
 
 procedure TAppConfig.Load;
  var
-  JSON:   string;
-  Loaded: TAppConfigData;
+  JSON:      string;
+  Loaded:    TAppConfigData;
+  LoadError: string;
 
  begin
   FLock.Enter;
@@ -192,23 +262,46 @@ procedure TAppConfig.Load;
   try
    if not TFile.Exists(FFileName) then
     begin
-     FData.Normalize;
-     SaveUnlocked;
+     WriteFactoryDefaultsUnlocked(STR_MSG_CONFIG_MISSING_DEFAULTS);
      Exit;
     end;
 
-   JSON := TFile.ReadAllText(FFileName, TEncoding.UTF8);
-   Loaded := TJson.JsonToObject<TAppConfigData>(JSON);
+   Loaded := nil;
+   LoadError := '';
 
    try
-    if Loaded <> nil then
-     FData.AssignFrom(Loaded)
-    else
-     FData.Normalize;
+    JSON := TFile.ReadAllText(FFileName, TEncoding.UTF8);
+    Loaded := TJson.JsonToObject<TAppConfigData>(JSON);
 
+    if Loaded = nil then
+     LoadError := 'invalid or empty JSON';
+   except
+    on E: Exception do
+     LoadError := E.Message;
+   end;
+
+   if LoadError <> '' then
+    begin
+     Loaded.Free;
+     BackupCorruptConfigFile;
+     WriteFactoryDefaultsUnlocked(Format(STR_MSG_CONFIG_CORRUPT_REPAIR, [LoadError]));
+     Exit;
+    end;
+
+   try
+    FData.AssignFrom(Loaded);
    finally
     Loaded.Free;
    end;
+
+   // File parsed OK but password_hash empty: fill admin hash once and persist
+   // so the next restart does not repeat the empty-hash state.
+   if FData.password_hash = '' then
+    begin
+     FData.password_hash := HashPassword(STR_DEFAULT_PASSWORD);
+     LogConfigNotice(STR_MSG_CONFIG_EMPTY_PASSWORD);
+     SaveUnlocked;
+    end;
   finally
    FLock.Leave;
   end;
@@ -268,7 +361,11 @@ procedure TAppConfig.ApplyJson(const pJson: string);
  begin
   // Full public settings object from UI. password_hash is not in TApiPublicSettings —
   // it stays from the current config (change via /api/password).
-  Pub := TJson.JsonToObject<TApiPublicSettings>(pJson);
+  try
+   Pub := TJson.JsonToObject<TApiPublicSettings>(pJson);
+  except
+   raise Exception.Create(STR_ERR_INVALID_JSON_BODY_SETTINGS);
+  end;
 
   if Pub = nil then
    raise Exception.Create(STR_ERR_INVALID_JSON_BODY_SETTINGS);

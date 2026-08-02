@@ -12,7 +12,9 @@ var
  Mutex: THandle;
 
 begin
+{$IFDEF DEBUG}
  ReportMemoryLeaksOnShutdown := TRUE;
+{$ENDIF}
 
  Mutex := CreateMutex(nil, TRUE, PChar(STR_MUTEX_NAME));
 

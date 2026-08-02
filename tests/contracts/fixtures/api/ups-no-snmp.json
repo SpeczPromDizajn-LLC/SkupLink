@@ -1,0 +1,31 @@
+{
+  "ident": {
+    "manufacturer": "",
+    "model": "",
+    "software_version": "",
+    "name": "",
+    "attached_devices": ""
+  },
+  "topology": "unknown",
+  "input_phase_count": 0,
+  "output_phase_count": 0,
+  "input": {
+    "phases": []
+  },
+  "output": {
+    "frequency": 0,
+    "phases": [],
+    "total_percent_load": 0,
+    "total_power_watts": 0
+  },
+  "battery": {
+    "status": "unknown",
+    "status_code": 1,
+    "voltage": 0,
+    "charge_percent": -1,
+    "estimated_minutes_remaining": 0,
+    "estimated_seconds_remaining": 0,
+    "seconds_on_battery": 0
+  },
+  "snmp_connected": false
+}

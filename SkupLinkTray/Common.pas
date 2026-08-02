@@ -3,6 +3,7 @@
 interface
 
 const
+ // Держать синхронно с SkupLinkService/Common.pas (HTTP_PORT)
  HTTP_PORT               = 8847;
  TRAY_POLL_INTERVAL_MS   = 3000;
  HTTP_CONNECT_TIMEOUT_MS = 1500;

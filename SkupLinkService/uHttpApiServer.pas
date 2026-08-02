@@ -38,9 +38,10 @@ type
   function ExtractToken(pRequestInfo: TIdHTTPRequestInfo): string;
   function RequireAuth(pRequestInfo: TIdHTTPRequestInfo; pResponseInfo: TIdHTTPResponseInfo): Boolean;
   function MimeForExt(const pExt: string): string;
-  function TryServeStatic(const pPath: string; pResponseInfo: TIdHTTPResponseInfo): Boolean;
+  function TryServeStatic(const pPath: string; pResponseInfo: TIdHTTPResponseInfo; pIsHead: Boolean): Boolean;
   procedure HandleLogin(const pBody: string; pResponseInfo: TIdHTTPResponseInfo);
-  procedure HandlePassword(const pBody: string; pResponseInfo: TIdHTTPResponseInfo);
+  procedure HandlePassword(const pBody, pKeepToken: string; pResponseInfo: TIdHTTPResponseInfo);
+  procedure HandleSettings(const pBody: string; pResponseInfo: TIdHTTPResponseInfo);
   procedure HandleDiscover(pResponseInfo: TIdHTTPResponseInfo);
  public
   constructor Create(pConfig: TAppConfig; pSnmp: TSnmpUpsClient; pAuth: TAuthService; pHistory: THistoryStore);
@@ -231,7 +232,7 @@ function THttpApiServer.MimeForExt(const pExt: string): string;
   Exit('application/octet-stream');
  end;
 
-function THttpApiServer.TryServeStatic(const pPath: string; pResponseInfo: TIdHTTPResponseInfo): Boolean;
+function THttpApiServer.TryServeStatic(const pPath: string; pResponseInfo: TIdHTTPResponseInfo; pIsHead: Boolean): Boolean;
  var
   Rel:  string;
   Full: string;
@@ -265,9 +266,16 @@ function THttpApiServer.TryServeStatic(const pPath: string; pResponseInfo: TIdHT
     Exit;
 
    pResponseInfo.ContentType := MimeForExt(ExtractFileExt(Full));
-   pResponseInfo.ContentStream := TFileStream.Create(Full, fmOpenRead or fmShareDenyNone);
-   pResponseInfo.FreeContentStream := TRUE;
+   pResponseInfo.ContentLength := TFile.GetSize(Full);
    pResponseInfo.ResponseNo := 200;
+
+   // HEAD: headers only (Content-Type / Content-Length), no body stream.
+   if not pIsHead then
+    begin
+     pResponseInfo.ContentStream := TFileStream.Create(Full, fmOpenRead or fmShareDenyNone);
+     pResponseInfo.FreeContentStream := TRUE;
+    end;
+
    Result := TRUE;
   except
    Result := FALSE;
@@ -319,7 +327,7 @@ procedure THttpApiServer.HandleLogin(const pBody: string; pResponseInfo: TIdHTTP
   end;
  end;
 
-procedure THttpApiServer.HandlePassword(const pBody: string; pResponseInfo: TIdHTTPResponseInfo);
+procedure THttpApiServer.HandlePassword(const pBody, pKeepToken: string; pResponseInfo: TIdHTTPResponseInfo);
  var
   Req: TApiPasswordRequest;
 
@@ -351,7 +359,7 @@ procedure THttpApiServer.HandlePassword(const pBody: string; pResponseInfo: TIdH
     end;
 
    try
-    FAuth.ChangePassword(Req.old_password, Req.new_password);
+    FAuth.ChangePassword(Req.old_password, Req.new_password, pKeepToken);
     WriteJson(pResponseInfo, 200, TApiOk.TrueJson);
    except
     on E: Exception do
@@ -359,6 +367,23 @@ procedure THttpApiServer.HandlePassword(const pBody: string; pResponseInfo: TIdH
    end;
   finally
    Req.Free;
+  end;
+ end;
+
+procedure THttpApiServer.HandleSettings(const pBody: string; pResponseInfo: TIdHTTPResponseInfo);
+ begin
+  if Trim(pBody) = '' then
+   begin
+    WriteError(pResponseInfo, 400, STR_ERR_EMPTY_JSON_BODY);
+    Exit;
+   end;
+
+  try
+   FConfig.ApplyJson(pBody);
+   WriteJson(pResponseInfo, 200, FConfig.ToPublicJson);
+  except
+   on E: Exception do
+    WriteError(pResponseInfo, 400, E.Message);
   end;
  end;
 
@@ -435,7 +460,7 @@ procedure THttpApiServer.HandleCommandGet(pContext: TIdContext; pRequestInfo: TI
 
    if not StartsText('/api/', Path) then
     begin
-     if TryServeStatic(Path, pResponseInfo) then
+     if TryServeStatic(Path, pResponseInfo, Method = 'HEAD') then
       Exit;
     end;
 
@@ -488,7 +513,7 @@ procedure THttpApiServer.HandleCommandOther(pContext: TIdContext; pRequestInfo: 
         Exit;
 
        Body := ReadRequestBody(pRequestInfo);
-       HandlePassword(Body, pResponseInfo);
+       HandlePassword(Body, ExtractToken(pRequestInfo), pResponseInfo);
        Exit;
       end;
 
@@ -498,21 +523,7 @@ procedure THttpApiServer.HandleCommandOther(pContext: TIdContext; pRequestInfo: 
         Exit;
 
        Body := ReadRequestBody(pRequestInfo);
-
-       if Trim(Body) = '' then
-        begin
-         WriteError(pResponseInfo, 400, STR_ERR_EMPTY_JSON_BODY);
-         Exit;
-        end;
-
-       try
-        FConfig.ApplyJson(Body);
-        WriteJson(pResponseInfo, 200, FConfig.ToPublicJson);
-       except
-        on E: Exception do
-         WriteError(pResponseInfo, 400, E.Message);
-       end;
-
+       HandleSettings(Body, pResponseInfo);
        Exit;
       end;
 

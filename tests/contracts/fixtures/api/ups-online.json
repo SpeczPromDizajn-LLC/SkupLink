@@ -1,0 +1,45 @@
+{
+  "ident": {
+    "manufacturer": "SITICS",
+    "model": "SKUP-8",
+    "software_version": "1.2.3",
+    "name": "UPS-Lab",
+    "attached_devices": "PC-1"
+  },
+  "topology": "single_phase",
+  "input_phase_count": 1,
+  "output_phase_count": 1,
+  "input": {
+    "phases": [
+      {
+        "index": 1,
+        "voltage": 228.5,
+        "frequency": 50.02
+      }
+    ]
+  },
+  "output": {
+    "frequency": 50.01,
+    "phases": [
+      {
+        "index": 1,
+        "voltage": 220.0,
+        "frequency": 50.01,
+        "percent_load": 34.0,
+        "power_watts": 410.0
+      }
+    ],
+    "total_percent_load": 34.0,
+    "total_power_watts": 410.0
+  },
+  "battery": {
+    "status": "battery_normal",
+    "status_code": 2,
+    "voltage": 54.2,
+    "charge_percent": 92,
+    "estimated_minutes_remaining": 48,
+    "estimated_seconds_remaining": 2880,
+    "seconds_on_battery": 0
+  },
+  "snmp_connected": true
+}

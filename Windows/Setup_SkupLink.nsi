@@ -6,6 +6,7 @@
 !define SERVICE_DIR "..\SkupLinkService"
 !define TRAY_EXE "..\SkupLinkTray\Win32\Release\SkupLinkTray.exe"
 !define EXE_NAME "SkupLink"
+; Must match Common.pas STR_SERVICE_DISPLAY_NAME (= STR_APP_NAME + ' UPS SNMP Agent')
 !define SERVICE_DISPLAY_NAME "SkupLink UPS SNMP Agent"
 !define WEB_URL "http://localhost:8847/"
 
@@ -100,6 +101,11 @@ Section "$(SEC_Service)" SecService
   File "${SERVICE_DIR}\web\favicon.svg"
   File "${SERVICE_DIR}\web\index.html"
   File "${SERVICE_DIR}\web\lang.js"
+  SetOutPath $INSTDIR\web\fonts\manrope
+  File "${SERVICE_DIR}\web\fonts\manrope\*.*"
+
+  SetOutPath $INSTDIR\web\fonts\sora
+  File "${SERVICE_DIR}\web\fonts\sora\*.*"
 
   SetOutPath $INSTDIR
 

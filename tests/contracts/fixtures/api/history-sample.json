@@ -1,0 +1,28 @@
+{
+  "samples": [
+    {
+      "ts": "2026-08-02T11:00:00.000Z",
+      "input_voltages": [227.1],
+      "output_voltages": [219.8],
+      "load_percents": [31.0],
+      "battery_voltage": 54.0,
+      "charge_percent": 93.0
+    },
+    {
+      "ts": "2026-08-02T11:00:05.000Z",
+      "input_voltages": [228.5],
+      "output_voltages": [220.0],
+      "load_percents": [34.0],
+      "battery_voltage": 54.2,
+      "charge_percent": 92.0
+    },
+    {
+      "ts": "2026-08-02T11:00:10.000Z",
+      "input_voltages": [229.0, 228.2, 227.8],
+      "output_voltages": [220.1, 219.9, 220.0],
+      "load_percents": [22.0, 25.0, 24.0],
+      "battery_voltage": 53.9,
+      "charge_percent": 91.0
+    }
+  ]
+}

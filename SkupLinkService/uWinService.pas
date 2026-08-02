@@ -6,19 +6,16 @@ interface
 
 uses
  Winapi.Windows,
- Winapi.Messages,
  System.SysUtils,
  System.Classes,
  System.Win.Registry,
- Vcl.Graphics,
- Vcl.Controls,
  Vcl.SvcMgr,
- Vcl.Dialogs,
  Common,
  uServiceHost;
 
 type
  TSkupLinkService = class(TService)
+  procedure ServiceCreate(Sender: TObject);
   procedure ServiceAfterInstall(Sender: TService);
   procedure ServiceStart(Sender: TService; var Started: Boolean);
   procedure ServiceStop(Sender: TService; var Stopped: Boolean);
@@ -44,6 +41,12 @@ procedure ServiceController(CtrlCode: DWord); stdcall;
 function TSkupLinkService.GetServiceController: TServiceController;
  begin
   Result := ServiceController;
+ end;
+
+procedure TSkupLinkService.ServiceCreate(Sender: TObject);
+ begin
+  // Canonical name: Common.STR_SERVICE_DISPLAY_NAME (dfm value is overridden).
+  DisplayName := STR_SERVICE_DISPLAY_NAME;
  end;
 
 procedure TSkupLinkService.ServiceAfterInstall(Sender: TService);
@@ -77,8 +80,12 @@ procedure TSkupLinkService.ServiceStart(Sender: TService; var Started: Boolean);
    FHost.Start;
    Started := TRUE;
   except
-   FreeAndNil(FHost);
-   Started := FALSE;
+   on E: Exception do
+    begin
+     DebugLogSilentExcept('TSkupLinkService.ServiceStart', E.Message);
+     FreeAndNil(FHost);
+     Started := FALSE;
+    end;
   end;
  end;
 
@@ -93,7 +100,11 @@ procedure TSkupLinkService.ServiceStop(Sender: TService; var Stopped: Boolean);
      FreeAndNil(FHost);
     end;
   except
-   FreeAndNil(FHost);
+   on E: Exception do
+    begin
+     DebugLogSilentExcept('TSkupLinkService.ServiceStop', E.Message);
+     FreeAndNil(FHost);
+    end;
   end;
  end;
 
@@ -105,14 +116,12 @@ procedure TSkupLinkService.ServiceShutdown(Sender: TService);
   ServiceStop(Sender, Stopped);
  end;
 
-end.
-
 {$ELSE}
 
 interface
 
 implementation
 
-end.
-
 {$ENDIF}
+
+end.

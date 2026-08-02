@@ -16,7 +16,11 @@ type
   FConfig:  TAppConfig;
   FLock:    TCriticalSection;
   FPending: Boolean;
+{$IFNDEF DEBUG}
+{$IFDEF MSWINDOWS}
   procedure EnableShutdownPrivilege;
+{$ENDIF}
+{$ENDIF}
   function ScheduleOsShutdown(pDelaySeconds: Integer): Boolean;
   function AbortOsShutdown: Boolean;
   procedure ClearPending;
@@ -51,15 +55,14 @@ destructor TShutdownWatch.Destroy;
   inherited Destroy;
  end;
 
-procedure TShutdownWatch.EnableShutdownPrivilege;
+{$IFNDEF DEBUG}
 {$IFDEF MSWINDOWS}
+procedure TShutdownWatch.EnableShutdownPrivilege;
  var
   Token:      THandle;
   Privileges: TTokenPrivileges;
   Len:        DWORD;
-{$ENDIF}
  begin
-{$IFDEF MSWINDOWS}
   if not OpenProcessToken(GetCurrentProcess, TOKEN_ADJUST_PRIVILEGES or TOKEN_QUERY, Token) then
    Exit;
 
@@ -73,8 +76,9 @@ procedure TShutdownWatch.EnableShutdownPrivilege;
   finally
    CloseHandle(Token);
   end;
-{$ENDIF}
  end;
+{$ENDIF}
+{$ENDIF}
 
 function TShutdownWatch.ScheduleOsShutdown(pDelaySeconds: Integer): Boolean;
  var
@@ -172,7 +176,23 @@ procedure TShutdownWatch.Evaluate(pSnap: TUpsSnapshot);
 
   try
    if pSnap.battery.charge_percent > Cfg.shutdown_battery_percent then
-    Exit;
+    begin
+     FLock.Enter;
+
+     try
+      Pending := FPending;
+     finally
+      FLock.Leave;
+     end;
+
+     if Pending then
+      begin
+       AbortOsShutdown;
+       ClearPending;
+      end;
+
+     Exit;
+    end;
 
    FLock.Enter;
 
